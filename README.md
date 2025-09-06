@@ -11,8 +11,8 @@ Currently pursuing Master of Science in Business Analytics (AI Stream) at The Un
 - **HK Jockey Club Turnover Analysis** - Developed regression models for HK$1.2B+ business impact analysis
 
 ## 💼 Professional Experience
-- Business Analyst (Capstone Project) - The Hong Kong Jockey Club
-- Business Development Intern - China International Futures Co., Ltd.
+- Business Analyst - The Hong Kong Jockey Club
+- Business Development Intern - China International Futures Company Limited
 - Assistant Analyst - DingLi Sustainability Technology Company Limited
 
 ## 🛠️ Technical Skills
@@ -35,3 +35,4 @@ Currently pursuing Master of Science in Business Analytics (AI Stream) at The Un
 ---
 
 *Built with HTML5, CSS3, and JavaScript. Hosted on GitHub Pages.*
+

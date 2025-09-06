@@ -1,9 +1,9 @@
 # Hanmei Zhang - Portfolio Website
 
-A modern, responsive portfolio website showcasing my journey as a Business Analytics graduate student and data science enthusiast.
+This is a modern, responsive portfolio website showcasing my journey as a Business Analytics graduate student and data science enthusiast.
 
 ## 🎓 About Me
-Currently pursuing Master of Science in Business Analytics (AI Stream) at The University of Hong Kong, with a strong foundation in business economics from University of Macau (GPA: 3.75/4.00, Top 10%).
+Currently pursuing Master of Science in Business Analytics (AI Stream) at The University of Hong Kong, with a strong foundation in business economics and statistics from University of Macau (GPA: 3.75/4.00, Top 10%).
 
 ## 🚀 Featured Projects
 - **Bitcoin Returns Prediction via Social Media Sentiment** - Achieved 193% higher returns than benchmark through advanced sentiment analysis and trading simulations
@@ -16,9 +16,9 @@ Currently pursuing Master of Science in Business Analytics (AI Stream) at The Un
 - Assistant Analyst - DingLi Sustainability Technology Company Limited
 
 ## 🛠️ Technical Skills
-- **Programming**: Python, R, C++, JavaScript
+- **Programming**: Python, R, SQL, C++, Web Development(HTML, CSS, JavaScript)
 - **Analytics**: Machine Learning, Time Series Analysis, Statistical Modeling
-- **Tools**: Bloomberg Terminal, Alteryx, Jupyter, Git
+- **Tools**: Tableau, Alteryx, Jupyter, Git
 - **Specialties**: Business Intelligence, ESG Analysis, Financial Trading, Web Scraping
 
 ## 📱 Website Features
@@ -33,4 +33,5 @@ Currently pursuing Master of Science in Business Analytics (AI Stream) at The Un
 - **Location**: Hong Kong, Hong Kong SAR
 
 ---
+
 *Built with HTML5, CSS3, and JavaScript. Hosted on GitHub Pages.*

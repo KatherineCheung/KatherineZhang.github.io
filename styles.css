@@ -223,7 +223,7 @@ body {
 
 .section-subtitle {
     font-size: 1.1rem;
-    color: #f8fafc;
+    color: #64748b;
     max-width: 600px;
     margin: 0 auto;
 }
@@ -268,7 +268,6 @@ body {
     display: flex;
     justify-content: center;
 }
-
 
 .profile-image {
     width: 250px;
@@ -1294,6 +1293,4 @@ body {
     #chartCanvas {
         height: 120px !important;
     }
-
 }
-

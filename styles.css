@@ -223,7 +223,7 @@ body {
 
 .section-subtitle {
     font-size: 1.1rem;
-    color: #64748b;
+    color: #ffffff;
     max-width: 600px;
     margin: 0 auto;
 }
@@ -1293,4 +1293,5 @@ body {
     #chartCanvas {
         height: 120px !important;
     }
+
 }

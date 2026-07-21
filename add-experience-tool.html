@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Add Experience — Katherine Zhang</title>
+<style>
+  :root {
+    --blue: #2563eb;
+    --grad-start: #667eea;
+    --grad-end: #764ba2;
+    --ink: #1e293b;
+    --muted: #64748b;
+    --bg-card: #f8fafc;
+    --border: #e2e8f0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--ink);
+    background: #ffffff;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 32px 24px 80px; }
+  header { margin-bottom: 28px; }
+  header h1 {
+    font-size: 1.5rem;
+    margin: 0 0 6px;
+    background: linear-gradient(135deg, var(--grad-start) 0%, var(--grad-end) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+  }
+  header p { color: var(--muted); margin: 0; font-size: 0.95rem; }
+
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .panel h2 {
+    font-size: 1rem;
+    margin: 0 0 12px;
+    color: var(--ink);
+  }
+  textarea {
+    width: 100%;
+    min-height: 110px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-family: inherit;
+    font-size: 0.92rem;
+    resize: vertical;
+    background: white;
+  }
+  textarea:focus, input:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+
+  .row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  button {
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+  }
+  button:active { transform: scale(0.98); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: var(--blue); color: white; }
+  .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+  .btn-secondary { background: white; color: var(--ink); border: 1px solid var(--border); }
+  .btn-secondary:hover:not(:disabled) { background: #f1f5f9; }
+  .btn-danger { background: white; color: #dc2626; border: 1px solid #fecaca; }
+  .btn-danger:hover:not(:disabled) { background: #fef2f2; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 5px 10px; font-size: 0.78rem; }
+
+  .status { font-size: 0.85rem; margin-top: 10px; color: var(--muted); min-height: 1.2em; }
+  .status.error { color: #dc2626; }
+  .status.success { color: #16a34a; }
+
+  .field-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 12px 0 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  .field-label:first-child { margin-top: 0; }
+  input[type=text] {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-family: inherit;
+    font-size: 0.92rem;
+    background: white;
+  }
+  .bullets-edit textarea { min-height: 90px; font-size: 0.88rem; }
+  .hint { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+  /* Timeline preview — mirrors styles.css on the live site */
+  .timeline { position: relative; max-width: 800px; margin: 0 auto; }
+  .timeline-item { position: relative; margin-bottom: 1.5rem; padding-left: 60px; }
+  .timeline-dot {
+    position: absolute; left: 1px; top: 8px; width: 20px; height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--grad-start) 0%, var(--grad-end) 100%);
+    border: 4px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+  .timeline-content {
+    background: white; padding: 1.5rem 1.75rem; border-radius: 16px;
+    border-left: 4px solid var(--blue); box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  }
+  .timeline-content h3 { font-size: 1.15rem; font-weight: 600; color: var(--ink); margin: 0 0 0.4rem; }
+  .timeline-content h4 { font-size: 1rem; color: var(--blue); margin: 0 0 0.5rem; font-weight: 500; }
+  .timeline-date {
+    background: var(--blue); color: white; padding: 0.25rem 0.7rem; border-radius: 20px;
+    font-size: 0.82rem; font-weight: 500; display: inline-block; margin-bottom: 0.8rem;
+  }
+  .timeline-content p { color: var(--muted); margin: 0 0 0.8rem; line-height: 1.6; font-size: 0.92rem; }
+  .timeline-content ul { color: var(--muted); padding-left: 1.1rem; margin: 0; font-size: 0.9rem; }
+  .timeline-content li { margin-bottom: 0.4rem; line-height: 1.55; }
+
+  .entry-controls {
+    display: flex; gap: 6px; margin-top: 10px;
+  }
+  .entry-block { margin-bottom: 22px; }
+  .empty-state {
+    text-align: center; color: var(--muted); font-size: 0.9rem; padding: 30px 10px;
+  }
+  .spinner {
+    display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px;
+    vertical-align: -2px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Add Experience</h1>
+    <p>Paste rough notes about a new role or project — Claude structures it to match your site's existing tone, you review it, then export the updated file.</p>
+  </header>
+
+  <div class="panel">
+    <h2>1. Describe the experience</h2>
+    <textarea id="rawInput" placeholder="e.g. I joined XYZ Corp in March 2026 as a data analyst intern. Built dashboards in Tableau for the ops team, cleaned a messy sales dataset, cut reporting time way down, still there part time..."></textarea>
+    <div class="row">
+      <button class="btn-primary" id="parseBtn" onclick="parseEntry()">Parse with AI</button>
+      <button class="btn-secondary" onclick="document.getElementById('rawInput').value=''">Clear</button>
+    </div>
+    <div class="status" id="parseStatus"></div>
+  </div>
+
+  <div class="panel" id="draftPanel" style="display:none;">
+    <h2>2. Review &amp; edit</h2>
+    <label class="field-label">Title</label>
+    <input type="text" id="draftTitle">
+    <label class="field-label">Company / Organization</label>
+    <input type="text" id="draftCompany">
+    <label class="field-label">Date range</label>
+    <input type="text" id="draftDates" placeholder="MM/YYYY - MM/YYYY or MM/YYYY - Present">
+    <label class="field-label">Summary</label>
+    <textarea id="draftSummary" style="min-height:60px;"></textarea>
+    <label class="field-label">Bullets (one per line)</label>
+    <div class="bullets-edit"><textarea id="draftBullets"></textarea></div>
+    <div class="hint">Preview updates as you edit. Nothing is added until you click below.</div>
+    <div class="row">
+      <button class="btn-primary" onclick="addDraftToList()">Add to Experience List</button>
+      <button class="btn-secondary" onclick="cancelDraft()">Discard</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Live preview (matches your site's Experience section)</h2>
+    <div id="timelinePreview" class="timeline"></div>
+    <div class="row" style="margin-top:16px;">
+      <button class="btn-primary" onclick="downloadJson()">Download experience.json</button>
+      <button class="btn-secondary" onclick="copyJson()">Copy JSON</button>
+      <button class="btn-secondary" onclick="document.getElementById('importArea').style.display = document.getElementById('importArea').style.display === 'none' ? 'block' : 'none'">Import / replace JSON</button>
+    </div>
+    <div id="importArea" style="display:none; margin-top:14px;">
+      <label class="field-label">Paste the current contents of data/experience.json here to sync, then click Load</label>
+      <textarea id="importText" style="min-height:100px; font-size:0.8rem;"></textarea>
+      <div class="row"><button class="btn-secondary" onclick="loadImport()">Load</button></div>
+    </div>
+    <div class="status" id="listStatus"></div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'experience-entries';
+const DEFAULT_ENTRIES = [
+  {
+    "title": "Business Analyst (Capstone Project)",
+    "company": "The Hong Kong Jockey Club",
+    "dateRange": "03/2025 - 06/2025",
+    "summary": "Conducted comprehensive research on horse racing industry and developed predictive models to optimize business strategy for HK$1.2B+ turnover operations.",
+    "bullets": [
+      "Mastered horse racing industry definitions and analyzed bettor behavior through field research",
+      "Developed linear regression model to quantify \"star horse\" impact on total turnover",
+      "Delivered data-driven insights to senior stakeholders, achieving projected 5-7% KPI uplift",
+      "Incorporated control variables for race class and venue in predictive modeling"
+    ]
+  },
+  {
+    "title": "Business Development Intern",
+    "company": "China International Futures Co., Ltd.",
+    "dateRange": "12/2024 - 01/2025",
+    "summary": "Contributed to financial operations and market research for commodity futures trading, enhancing operational efficiency and supporting investment decisions.",
+    "bullets": [
+      "Prepared monthly financial statements and client fund reconciliations",
+      "Conducted market research on commodity futures using Bloomberg Terminal",
+      "Analyzed supply-demand dynamics to forecast price trends for Lithium Carbonate",
+      "Enhanced operational efficiency by 20% through process improvements",
+      "Collaborated with compliance, risk management, and research teams"
+    ]
+  },
+  {
+    "title": "Assistant Analyst",
+    "company": "DingLi Sustainability Technology Company Limited",
+    "dateRange": "05/2023 - 08/2023",
+    "summary": "Specialized in ESG data analysis and automation, developing Python-based solutions to enhance data collection and analysis efficiency.",
+    "bullets": [
+      "Gathered qualitative and quantitative ESG data from listed companies and government reports",
+      "Developed Python web scraping algorithms for automated financial report extraction",
+      "Boosted project efficiency by 80% through automation solutions",
+      "Performed ESG analysis according to standard guidelines for investment strategy",
+      "Identified key macroeconomic trends supporting long-term investment decisions"
+    ]
+  },
+  {
+    "title": "Research Assistant",
+    "company": "University of Macau, Faculty of Business Administration",
+    "dateRange": "2021 - 2024",
+    "summary": "Gained 3 years of research experience in fintech and strategy while pursuing undergraduate studies. Contributed to various research projects combining quantitative analysis with business applications.",
+    "bullets": [
+      "Assisted in fintech research projects using quantitative methods",
+      "Conducted statistical analysis and data modeling for strategy research",
+      "Collaborated with faculty on business economics research",
+      "Developed strong analytical and problem-solving skills"
+    ]
+  },
+  {
+    "title": "Graduate Student & Student Representative",
+    "company": "The University of Hong Kong, HKU Business School",
+    "dateRange": "08/2024 - Present",
+    "summary": "Currently pursuing MSc in Business Analytics (AI Stream) while serving as Student Representative. Focusing on advanced analytics and machine learning applications in business.",
+    "bullets": [
+      "Studying cutting-edge AI and machine learning techniques",
+      "Representing student interests and facilitating communication",
+      "Working on practical business analytics projects including HK Jockey Club capstone",
+      "Building expertise in quantitative trading and text analysis"
+    ]
+  }
+];
+
+let entries = [];
+let draft = null;
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+
+async function init() {
+  try {
+    const stored = await window.storage.get(STORAGE_KEY);
+    entries = stored && stored.value ? JSON.parse(stored.value) : DEFAULT_ENTRIES;
+  } catch (e) {
+    entries = DEFAULT_ENTRIES;
+  }
+  renderList();
+}
+
+async function persist() {
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(entries));
+  } catch (e) {
+    console.error('Could not save locally:', e);
+  }
+}
+
+function renderList() {
+  const container = document.getElementById('timelinePreview');
+  if (!entries.length) {
+    container.innerHTML = '<div class="empty-state">No experience entries yet.</div>';
+    return;
+  }
+  container.innerHTML = entries.map((item, i) => `
+    <div class="entry-block">
+      <div class="timeline-item">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <h3>${escapeHtml(item.title)}</h3>
+          <h4>${escapeHtml(item.company)}</h4>
+          <span class="timeline-date">${escapeHtml(item.dateRange)}</span>
+          <p>${escapeHtml(item.summary)}</p>
+          <ul>${(item.bullets || []).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+        </div>
+      </div>
+      <div class="entry-controls">
+        <button class="btn-ghost" onclick="moveEntry(${i}, -1)" ${i === 0 ? 'disabled' : ''}>↑ Move up</button>
+        <button class="btn-ghost" onclick="moveEntry(${i}, 1)" ${i === entries.length - 1 ? 'disabled' : ''}>↓ Move down</button>
+        <button class="btn-ghost" onclick="removeEntry(${i})" style="color:#dc2626;">Remove</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function moveEntry(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= entries.length) return;
+  [entries[i], entries[j]] = [entries[j], entries[i]];
+  persist();
+  renderList();
+}
+
+function removeEntry(i) {
+  entries.splice(i, 1);
+  persist();
+  renderList();
+  setStatus('listStatus', 'Entry removed.', 'success');
+}
+
+function setStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'status' + (type ? ' ' + type : '');
+}
+
+async function parseEntry() {
+  const raw = document.getElementById('rawInput').value.trim();
+  if (!raw) {
+    setStatus('parseStatus', 'Paste a description first.', 'error');
+    return;
+  }
+  const btn = document.getElementById('parseBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Parsing...';
+  setStatus('parseStatus', '', '');
+
+  const exampleEntries = DEFAULT_ENTRIES.slice(0, 2);
+
+  const systemPrompt = `You convert a person's rough, unstructured description of a work or research experience into a structured JSON object for their portfolio website's Experience section.
+
+Return ONLY valid JSON with this exact schema, no markdown fences, no commentary:
+{
+  "title": string,       // job title or role
+  "company": string,     // organization name
+  "dateRange": string,   // format "MM/YYYY - MM/YYYY", "MM/YYYY - Present", or "YYYY - YYYY" if only years are known
+  "summary": string,     // 1-2 sentence professional overview
+  "bullets": string[]    // 3-5 achievement-oriented bullets, each a single sentence starting with a strong past-tense action verb
+}
+
+Match the tone, register, and level of specificity shown in these existing entries from the same person's site (for style reference only, do not reuse their content):
+${JSON.stringify(exampleEntries, null, 2)}
+
+Rules:
+- Never invent numbers, metrics, or facts that are not present or clearly implied in the source text.
+- If a detail is missing (e.g. exact dates), make the most reasonable minimal inference from context; do not fabricate specifics.
+- Keep bullets concise, one sentence each, matching the density of the reference examples.
+- Output raw JSON only.`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: raw }]
+      })
+    });
+
+    if (!response.ok) throw new Error(`API error ${response.status}`);
+    const data = await response.json();
+    const textBlock = (data.content || []).find(b => b.type === 'text');
+    if (!textBlock) throw new Error('No text in response');
+
+    const cleaned = textBlock.text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+
+    draft = {
+      title: parsed.title || '',
+      company: parsed.company || '',
+      dateRange: parsed.dateRange || '',
+      summary: parsed.summary || '',
+      bullets: Array.isArray(parsed.bullets) ? parsed.bullets : []
+    };
+    showDraft();
+    setStatus('parseStatus', 'Parsed. Review the draft below before adding it.', 'success');
+  } catch (err) {
+    console.error(err);
+    setStatus('parseStatus', 'Could not parse that — try rephrasing, or fill the fields manually below.', 'error');
+    draft = { title: '', company: '', dateRange: '', summary: '', bullets: [] };
+    showDraft();
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Parse with AI';
+  }
+}
+
+function showDraft() {
+  document.getElementById('draftPanel').style.display = 'block';
+  document.getElementById('draftTitle').value = draft.title;
+  document.getElementById('draftCompany').value = draft.company;
+  document.getElementById('draftDates').value = draft.dateRange;
+  document.getElementById('draftSummary').value = draft.summary;
+  document.getElementById('draftBullets').value = draft.bullets.join('\n');
+  document.getElementById('draftPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function cancelDraft() {
+  draft = null;
+  document.getElementById('draftPanel').style.display = 'none';
+}
+
+function addDraftToList() {
+  const entry = {
+    title: document.getElementById('draftTitle').value.trim(),
+    company: document.getElementById('draftCompany').value.trim(),
+    dateRange: document.getElementById('draftDates').value.trim(),
+    summary: document.getElementById('draftSummary').value.trim(),
+    bullets: document.getElementById('draftBullets').value.split('\n').map(s => s.trim()).filter(Boolean)
+  };
+  if (!entry.title || !entry.company) {
+    setStatus('parseStatus', 'Title and company are required.', 'error');
+    return;
+  }
+  entries.unshift(entry);
+  persist();
+  renderList();
+  cancelDraft();
+  document.getElementById('rawInput').value = '';
+  setStatus('listStatus', 'Added to the top of your experience list.', 'success');
+}
+
+function downloadJson() {
+  const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'experience.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  setStatus('listStatus', 'Downloaded. Replace data/experience.json in your repo, then commit and push.', 'success');
+}
+
+async function copyJson() {
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(entries, null, 2));
+    setStatus('listStatus', 'Copied to clipboard.', 'success');
+  } catch (e) {
+    setStatus('listStatus', 'Could not copy — your browser may be blocking clipboard access.', 'error');
+  }
+}
+
+function loadImport() {
+  const text = document.getElementById('importText').value.trim();
+  if (!text) return;
+  try {
+    const parsed = JSON.parse(text);
+    if (!Array.isArray(parsed)) throw new Error('Not an array');
+    entries = parsed;
+    persist();
+    renderList();
+    document.getElementById('importArea').style.display = 'none';
+    setStatus('listStatus', 'Loaded. This is now your working list.', 'success');
+  } catch (e) {
+    setStatus('listStatus', 'That did not look like valid experience.json content.', 'error');
+  }
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+[
+  {
+    "title": "Business Analyst (Capstone Project)",
+    "company": "The Hong Kong Jockey Club",
+    "dateRange": "03/2025 - 06/2025",
+    "summary": "Conducted comprehensive research on horse racing industry and developed predictive models to optimize business strategy for HK$1.2B+ turnover operations.",
+    "bullets": [
+      "Mastered horse racing industry definitions and analyzed bettor behavior through field research",
+      "Developed linear regression model to quantify \"star horse\" impact on total turnover",
+      "Delivered data-driven insights to senior stakeholders, achieving projected 5-7% KPI uplift",
+      "Incorporated control variables for race class and venue in predictive modeling"
+    ]
+  },
+  {
+    "title": "Business Development Intern",
+    "company": "China International Futures Co., Ltd.",
+    "dateRange": "12/2024 - 01/2025",
+    "summary": "Contributed to financial operations and market research for commodity futures trading, enhancing operational efficiency and supporting investment decisions.",
+    "bullets": [
+      "Prepared monthly financial statements and client fund reconciliations",
+      "Conducted market research on commodity futures using Bloomberg Terminal",
+      "Analyzed supply-demand dynamics to forecast price trends for Lithium Carbonate",
+      "Enhanced operational efficiency by 20% through process improvements",
+      "Collaborated with compliance, risk management, and research teams"
+    ]
+  },
+  {
+    "title": "Assistant Analyst",
+    "company": "DingLi Sustainability Technology Company Limited",
+    "dateRange": "05/2023 - 08/2023",
+    "summary": "Specialized in ESG data analysis and automation, developing Python-based solutions to enhance data collection and analysis efficiency.",
+    "bullets": [
+      "Gathered qualitative and quantitative ESG data from listed companies and government reports",
+      "Developed Python web scraping algorithms for automated financial report extraction",
+      "Boosted project efficiency by 80% through automation solutions",
+      "Performed ESG analysis according to standard guidelines for investment strategy",
+      "Identified key macroeconomic trends supporting long-term investment decisions"
+    ]
+  },
+  {
+    "title": "Research Assistant",
+    "company": "University of Macau, Faculty of Business Administration",
+    "dateRange": "2021 - 2024",
+    "summary": "Gained 3 years of research experience in fintech and strategy while pursuing undergraduate studies. Contributed to various research projects combining quantitative analysis with business applications.",
+    "bullets": [
+      "Assisted in fintech research projects using quantitative methods",
+      "Conducted statistical analysis and data modeling for strategy research",
+      "Collaborated with faculty on business economics research",
+      "Developed strong analytical and problem-solving skills"
+    ]
+  },
+  {
+    "title": "Graduate Student & Student Representative",
+    "company": "The University of Hong Kong, HKU Business School",
+    "dateRange": "08/2024 - Present",
+    "summary": "Currently pursuing MSc in Business Analytics (AI Stream) while serving as Student Representative. Focusing on advanced analytics and machine learning applications in business.",
+    "bullets": [
+      "Studying cutting-edge AI and machine learning techniques",
+      "Representing student interests and facilitating communication",
+      "Working on practical business analytics projects including HK Jockey Club capstone",
+      "Building expertise in quantitative trading and text analysis"
+    ]
+  }
+]

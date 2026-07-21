@@ -1,5 +1,28 @@
 [
   {
+    "title": "AI Engineer (Intern) → Assistant Product Manager",
+    "company": "Coded Solution, Hong Kong",
+    "dateRange": "01/2026 - Present",
+    "summary": "Leading end-to-end delivery of a white-label Loyalty & Voucher SaaS platform, scaling from MVP to 30+ enterprise clients within 3 months while stepping into cross-functional technical leadership.",
+    "bullets": [
+      "Built a white-label Loyalty & Voucher SaaS platform end-to-end (Central Console, Ops Portal, Member PWA) using React 18, Vite, TailwindCSS, Express.js/Node.js, and MongoDB, shipping MVP in 6 weeks and full market launch in 3 months across 30+ enterprise clients",
+      "Designed a pnpm monorepo across three portals to maximize code reuse, led a zero-downtime migration of 60,000+ user records, and integrated Web3 services via API with transaction quality monitoring for on-chain loyalty voucher operations",
+      "Established a structured QA framework for AI-assisted codebases (Claude Code, Cursor) to enforce logic integrity across complex business flows, achieving zero critical defects at launch across all client deployments",
+      "Stepped into a cross-functional lead role within the first week, coordinating a 5-person team across Product, BD, and Engineering, and presented technical roadmaps directly to the CEO and enterprise clients"
+    ]
+  },
+  {
+    "title": "Research Assistant, Data Team",
+    "company": "The University of Hong Kong",
+    "dateRange": "09/2025 - 01/2026",
+    "summary": "Architected an end-to-end Python and LLM data pipeline for large-scale research datasets, pairing automated extraction with rigorous data engineering to accelerate downstream ML model training.",
+    "bullets": [
+      "Architected an end-to-end Python and LLM pipeline to automate multi-modal information extraction from large-scale image datasets, reducing manual processing time by over 99%",
+      "Built automated workflows to cleanse, structure, and validate raw datasets at scale, supporting downstream ML model training and ensuring research-ready data availability across 2 projects",
+      "Built a centralized web interface for metadata management, standardizing data definitions and replacing ad-hoc file tracking to streamline cross-team collaboration"
+    ]
+  },
+  {
     "title": "Business Analyst (Capstone Project)",
     "company": "The Hong Kong Jockey Club",
     "dateRange": "03/2025 - 06/2025",

@@ -149,17 +149,20 @@ function animateStats() {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 const target = entry.target;
-                const finalValue = parseInt(target.textContent.replace('+', ''));
+                const match = target.textContent.match(/^([\d.]+)(.*)$/);
+                const finalValue = match ? parseFloat(match[1]) : 0;
+                const suffix = match ? match[2] : '';
+                const decimals = match && match[1].includes('.') ? match[1].split('.')[1].length : 0;
                 let currentValue = 0;
                 const increment = finalValue / 30;
-                
+
                 const timer = setInterval(() => {
                     currentValue += increment;
                     if (currentValue >= finalValue) {
-                        target.textContent = finalValue + '+';
+                        target.textContent = finalValue.toFixed(decimals) + suffix;
                         clearInterval(timer);
                     } else {
-                        target.textContent = Math.floor(currentValue) + '+';
+                        target.textContent = currentValue.toFixed(decimals) + suffix;
                     }
                 }, 50);
                 

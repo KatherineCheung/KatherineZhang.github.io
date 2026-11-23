@@ -111,7 +111,7 @@
         parts = [];
         const top = h * 0.15, bottom = h * 0.85, TH = bottom - top;
         const R = Math.min(w * 0.4, TH * 0.42);
-        G = { cx: w / 2, top, bottom, TH, R };
+        G = { cx: w / 2, top, bottom, TH, R, w };
         const dens = clamp((w * h) / (380 * 430), 0.45, 1) * (reduceMotion ? .6 : 1);
         const nS = Math.round(230 * dens);                       // two golden garland spirals
         for (let s = 0; s < 2; s++) for (let i = 0; i < nS; i++) {
@@ -147,7 +147,8 @@
         ctx.globalCompositeOperation = 'lighter';
         const bg = easeOut(clamp(el / 1600, 0, 1));
         ctx.globalAlpha = 0.45 * bg;
-        ctx.drawImage(SPR.amber, cx - R * 1.6, bottom + TH * .075 - R * .34, R * 3.2, R * .68);
+        const gw = Math.min(R * 3.2, G.w);                                            // glow kept inside the canvas
+        ctx.drawImage(SPR.amber, cx - gw / 2, bottom + TH * .075 - R * .34, gw, R * .68);
         ctx.globalAlpha = 0.14 * bg;
         ctx.drawImage(SPR.gold, cx - R * 1.3, top + TH * .15, R * 2.6, TH * .9);
         const rot = el * 0.00034;

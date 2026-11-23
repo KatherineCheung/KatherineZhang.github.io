@@ -107,7 +107,8 @@
         beat += .12 * Math.exp(-(el - kickAt) / 260) * (el > kickAt ? 1 : 0);
         ctx.globalCompositeOperation = 'lighter';
         ctx.globalAlpha = .35 * easeOut(clamp(el / 1600, 0, 1));
-        ctx.drawImage(SPR.rose, cx - s * 26 * beat, cy - s * 24 * beat, s * 52 * beat, s * 46 * beat);
+        const gw = Math.min(s * 52 * beat, w), gh = Math.min(s * 46 * beat, h);          // glow kept inside the canvas
+        ctx.drawImage(SPR.rose, cx - gw / 2, cy + s * 2.5 - gh / 2, gw, gh);
         for (const p of parts) {
           const kk = clamp((el - p.at) / 650, 0, 1);
           if (kk <= 0) continue;

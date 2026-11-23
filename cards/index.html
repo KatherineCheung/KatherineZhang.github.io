@@ -30,6 +30,27 @@
     -webkit-font-smoothing:antialiased;
   }
   main{max-width:560px;margin:0 auto;padding:max(28px,env(safe-area-inset-top)) 16px max(40px,env(safe-area-inset-bottom))}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr);gap:0 20px}
+
+  /* live preview: the real card page in a phone-sized frame, scaled to fit */
+  .pv-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .pv-head button{appearance:none;background:none;border:0;color:var(--muted);font:inherit;font-size:.78rem;cursor:pointer;text-decoration:underline}
+  .phone{
+    position:relative;width:100%;max-width:300px;margin:0 auto;aspect-ratio:360/700;
+    border-radius:26px;overflow:hidden;background:#05070f;
+    border:1px solid var(--line);box-shadow:0 0 0 6px rgba(5,8,22,.7),0 24px 60px -18px rgba(0,0,0,.8);
+  }
+  .phone iframe{position:absolute;left:0;top:0;width:360px;height:700px;border:0;transform-origin:0 0;transform:scale(var(--k,1))}
+  .phone.collapsed{display:none}
+  .pv-panel .note{text-align:center}
+  @media (min-width:960px){
+    main{max-width:1040px}
+    .layout{grid-template-columns:minmax(0,1fr) 360px;align-items:start}
+    .layout > .panel{grid-column:1}
+    .layout > .pv-panel{grid-column:2;grid-row:1 / span 3;position:sticky;top:20px}
+    .phone.collapsed{display:block}
+    .pv-head button{display:none}
+  }
   header{text-align:center;margin-bottom:22px}
   header .star{color:var(--gold);font-size:1.1rem;text-shadow:0 0 12px rgba(255,200,120,.8)}
   h1{margin:.2em 0 .15em;font-family:var(--serif);font-weight:500;font-size:clamp(1.6rem,6vw,2.1rem);color:var(--gold-soft);letter-spacing:.04em}
@@ -135,6 +156,7 @@
     <p data-i18n="sub"></p>
   </header>
 
+  <div class="layout">
   <section class="panel">
     <div class="field">
       <span class="label" data-i18n="themeLabel"></span>
@@ -164,6 +186,15 @@
     <button id="make" class="btn primary" type="button" data-i18n="make"></button>
   </section>
 
+  <section class="panel pv-panel">
+    <div class="pv-head">
+      <span class="label" style="margin:0" data-i18n="pvLabel"></span>
+      <button type="button" id="pvToggle"></button>
+    </div>
+    <div class="phone" id="phone"><iframe id="pv" title="Card preview"></iframe></div>
+    <p class="note" data-i18n="pvNote"></p>
+  </section>
+
   <section class="panel" id="result" hidden>
     <span class="label" data-i18n="ready"></span>
     <div class="link" id="link"></div>
@@ -185,6 +216,7 @@
     <ul class="sent" id="sent"></ul>
     <p class="empty" id="empty" data-i18n="empty"></p>
   </section>
+  </div>
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -216,6 +248,8 @@ const UI = {
     made: '已生成的贺卡', clear: '清空', empty: '还没有。生成的链接会保存在这台设备上，方便一个个发出去。',
     copied: '链接已复制 ✦', copyFail: '复制失败，请长按上面的链接手动复制', noShare: '这个浏览器不支持系统分享，请复制链接',
     anyone: '（未写名字）', def: '默认：',
+    pvLabel: '实时预览', pvHide: '收起', pvShow: '展开',
+    pvNote: '这里跳过了拆信封，也不放音乐。<br>可以在里面点一点、滑一滑，试试互动效果。',
     shareText: (th, to, url) => `${th.emoji} ${to ? to + '，' : ''}给你准备了一张${th.cardName.zh}，点开看看 ✨\n${url}`
   },
   en: {
@@ -228,6 +262,8 @@ const UI = {
     made: 'Cards you made', clear: 'Clear', empty: 'None yet. Links you make are kept on this device so you can send them one by one.',
     copied: 'Link copied ✦', copyFail: 'Copy failed — long-press the link above to copy it', noShare: 'Sharing isn’t supported here — copy the link instead',
     anyone: '(no name)', def: 'Default: ',
+    pvLabel: 'Live preview', pvHide: 'Hide', pvShow: 'Show',
+    pvNote: 'The envelope and music are skipped here.<br>Tap or swipe inside to try the effects.',
     shareText: (th, to, url) => `${th.emoji} ${to ? to + ', ' : ''}I made you a little ${th.cardName.en} ✨ Open it here:\n${url}`
   }
 };
@@ -279,11 +315,43 @@ function apply() {
   th.presets[lang].forEach(([name, text]) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'chip'; b.textContent = name;
-    b.addEventListener('click', () => { msgEl.value = text; count(); msgEl.focus(); });
+    b.addEventListener('click', () => { msgEl.value = text; count(); refreshPreview(); msgEl.focus(); });
     chips.appendChild(b);
   });
   renderSent();
+  $('#pvToggle').textContent = pvCollapsed ? t.pvShow : t.pvHide;
+  refreshPreview();
 }
+
+/* ---------- live preview ---------- */
+const pv = $('#pv'), phone = $('#phone');
+let pvKey = '', pvTimer = 0, pvCollapsed = store.get('cards.pvCollapsed', false);
+phone.classList.toggle('collapsed', pvCollapsed);
+const fit = () => phone.style.setProperty('--k', phone.clientWidth / 360);
+if ('ResizeObserver' in window) new ResizeObserver(fit).observe(phone); else addEventListener('resize', fit);
+function refreshPreview() {
+  const key = theme + '|' + lang;
+  if (key !== pvKey) {                 // occasion or language changed: load that card
+    pvKey = key;
+    const u = new URL(`./${theme}/`, location.href);
+    const p = new URLSearchParams({ lang, preview: '1' });
+    const to = toEl.value.trim(), from = fromEl.value.trim(), msg = msgEl.value.trim();
+    if (to) p.set('to', to);
+    if (from) p.set('from', from);
+    if (msg) p.set('msg', msg);
+    u.search = p.toString();
+    pv.src = u.toString();
+  } else {                             // only the words changed: update the text in place
+    try { pv.contentWindow.postMessage({ type: 'card-preview', to: toEl.value, from: fromEl.value, msg: msgEl.value }, location.origin); } catch (e) {}
+  }
+}
+[toEl, msgEl, fromEl].forEach(el => el.addEventListener('input', () => { clearTimeout(pvTimer); pvTimer = setTimeout(refreshPreview, 250); }));
+$('#pvToggle').addEventListener('click', () => {
+  pvCollapsed = !pvCollapsed; store.set('cards.pvCollapsed', pvCollapsed);
+  phone.classList.toggle('collapsed', pvCollapsed);
+  $('#pvToggle').textContent = pvCollapsed ? UI[lang].pvShow : UI[lang].pvHide;
+  fit();
+});
 
 function count() { $('#count').textContent = `${msgEl.value.length}/300`; }
 msgEl.addEventListener('input', count);

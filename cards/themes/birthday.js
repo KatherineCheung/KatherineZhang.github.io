@@ -93,7 +93,7 @@
         const t1 = { y0: base, hgt: h * .2, r: R };
         const t2 = { y0: base - h * .2, hgt: h * .17, r: R * .66 };
         const topY = t2.y0 - t2.hgt;
-        G = { cx, base, R, tilt, t1, t2, topY, anchorY: topY - h * .16 };
+        G = { cx, base, R, tilt, t1, t2, topY, anchorY: topY - h * .16, w };
         const dens = clamp((w * h) / (380 * 430), .45, 1) * (reduceMotion ? .6 : 1);
         const at = y => (base - y) / (base - topY) * 1500 + rand(300);
         [t1, t2].forEach((t, ti) => {
@@ -133,7 +133,8 @@
         const rot = el * .00026;
         ctx.globalCompositeOperation = 'lighter';
         const bg = easeOut(clamp(el / 1600, 0, 1));
-        ctx.globalAlpha = .4 * bg; ctx.drawImage(SPR.rose, cx - R * 1.6, base - R * .3, R * 3.2, R * .6);
+        const gw = Math.min(R * 3.2, G.w);                                          // glow kept inside the canvas
+        ctx.globalAlpha = .4 * bg; ctx.drawImage(SPR.rose, cx - gw / 2, base - R * .3, gw, R * .6);
         ctx.globalAlpha = .12 * bg; ctx.drawImage(SPR.gold, cx - R * 1.2, topY - R * .2, R * 2.4, base - topY + R * .4);
         for (const p of parts) {
           const kk = clamp((el - p.at) / 700, 0, 1);

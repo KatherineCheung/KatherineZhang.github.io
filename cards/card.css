@@ -285,7 +285,7 @@ main#stage > section{grid-area:1/1}
 .shot .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 
 /* ---------- recording mode (?rec=1): clean frame for screen recording ---------- */
-.rec .sound,.rec .tip,.rec .actions{display:none!important}
+.rec .sound,.rec .tip,.rec .actions,.preview .sound,.preview .tip,.preview .actions{display:none!important}
 .rec-cover{
   position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:24px;cursor:pointer;
   background:rgba(4,4,14,.92);text-align:center;transition:opacity .7s ease;

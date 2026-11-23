@@ -27,6 +27,7 @@ const lang = params.get('lang') === 'zh' || params.get('lang') === 'en'
   ? params.get('lang')
   : (CJK.test(rawMsg + (params.get('to') || '')) ? 'zh' : 'en');
 const REC = params.get('rec') === '1';
+const PREVIEW = params.get('preview') === '1';     // embedded in the maker: no envelope, no music, live text
 const pick = o => (o && typeof o === 'object' && (lang in o)) ? o[lang] : o;
 
 const UI = {
@@ -97,6 +98,7 @@ document.body.style.backgroundImage = [
 root.lang = lang === 'zh' ? 'zh-CN' : 'en';
 if (lang === 'zh') document.body.classList.add('zh');
 if (REC) document.body.classList.add('rec');
+if (PREVIEW) document.body.classList.add('preview');
 
 const seal = TH.sealText ? `<span class="seal-text">${TH.sealText}</span>` : TH.sealSvg;
 document.body.insertAdjacentHTML('afterbegin', `
@@ -722,14 +724,19 @@ const titleEl = $('#title'), msgEl = $('#message'), sigEl = $('#signature');
 const divider = $('#divider'), replayBtn = $('#replay'), tip = $('#tip'), actions = $('#actions');
 const speedK = reduceMotion ? .45 : 1;
 const zhK = lang === 'zh' ? 2.2 : 1;     // one Chinese character ≈ a short word: type it slower
-const BLOCKS = [
-  { el: titleEl, text: UI.title(CONFIG.to), speed: 88 * (lang === 'zh' ? 1.6 : 1) },
-  { el: msgEl, text: CONFIG.message, speed: 44 * zhK },
-  CONFIG.from ? { el: sigEl, text: UI.sig(CONFIG.from), speed: 115 } : null
-].filter(Boolean);
-if (!CONFIG.from) sigEl.hidden = true;
-BLOCKS.forEach(b => { b.chars = prepare(b.el, b.text); });
-$('#srText').textContent = BLOCKS.map(b => b.text).join(' ');
+let BLOCKS = [];
+function buildBlocks() {
+  BLOCKS = [
+    { el: titleEl, text: UI.title(CONFIG.to), speed: 88 * (lang === 'zh' ? 1.6 : 1) },
+    { el: msgEl, text: CONFIG.message, speed: 44 * zhK },
+    CONFIG.from ? { el: sigEl, text: UI.sig(CONFIG.from), speed: 115 } : null
+  ].filter(Boolean);
+  sigEl.hidden = !CONFIG.from;
+  if (!CONFIG.from) sigEl.textContent = '';
+  BLOCKS.forEach(b => { b.chars = prepare(b.el, b.text); });
+  $('#srText').textContent = BLOCKS.map(b => b.text).join(' ');
+}
+buildBlocks();
 
 const caret = document.createElement('span');
 caret.className = 'caret'; caret.setAttribute('aria-hidden', 'true');
@@ -808,6 +815,26 @@ function openCard() {
   setTimeout(typeAll, 2900 + 2000);
 }
 env.addEventListener('click', openCard);
+
+/* ---------------------------------------------------------------- preview mode (inside the maker)
+   Skips the envelope and shows the finished card at once. The maker sends
+   {type:'card-preview', to, from, msg} with postMessage as the user types. */
+if (PREVIEW) {
+  opened = true;
+  intro.hidden = true;
+  scene.classList.add('is-visible');
+  Scene.start();
+  const showAll = () => { BLOCKS.forEach(b => b.chars.forEach(c => c.classList.add('on'))); divider.classList.add('show'); };
+  showAll();
+  addEventListener('message', e => {
+    if (e.origin !== location.origin || !e.data || e.data.type !== 'card-preview') return;
+    CONFIG.to = clean(e.data.to, 24);
+    CONFIG.from = clean(e.data.from, 24);
+    CONFIG.message = clean(e.data.msg, 300) || pick(TH.message);
+    buildBlocks();
+    showAll();
+  });
+}
 replayBtn.addEventListener('click', () => { Scene.start(); setTimeout(typeAll, 900); });
 
 soundBtn.addEventListener('click', () => {

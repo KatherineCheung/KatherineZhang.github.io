@@ -101,6 +101,7 @@
     border:1px solid rgba(243,201,122,.2);border-radius:999px;padding:6px 11px;
   }
   .chip:hover{color:var(--gold-soft);border-color:rgba(243,201,122,.5)}
+  .chip[aria-pressed=true]{color:var(--gold-soft);border-color:var(--gold);background:rgba(243,201,122,.12)}
 
   .btn{
     appearance:none;font:inherit;font-size:.95rem;cursor:pointer;
@@ -242,12 +243,12 @@ const UI = {
     h1: th => `做一张${th.cardName.zh}`,
     sub: '选好节日，写下名字和祝福，生成专属链接，<br>发给 WhatsApp、微信、Instagram 上的 TA。',
     themeLabel: '选择节日', langLabel: '贺卡语言', toLabel: '送给谁', msgLabel: '祝福语', fromLabel: '署名',
-    msgHint: '留空会用默认祝福；可以换行', make: '✦ 生成贺卡链接', ready: '贺卡已就绪',
+    msgHint: '可以直接在上面改；可以换行', make: '✦ 生成贺卡链接', ready: '贺卡已就绪',
     preview: '👀 预览', copy: '🔗 复制链接', wa: '💬 WhatsApp', share: '📤 更多分享', rec: '🎬 录屏版（做视频用）',
     note: '微信：复制链接后粘贴到聊天里。Instagram：在私信里粘贴链接。<br>想发视频：打开「录屏版」，用手机录屏（记得关掉静音模式）。想发图片：贺卡打开后点「保存图片」。<br>祝福语就写在链接里，拿到链接的人都能看到。',
     made: '已生成的贺卡', clear: '清空', empty: '还没有。生成的链接会保存在这台设备上，方便一个个发出去。',
     copied: '链接已复制 ✦', copyFail: '复制失败，请长按上面的链接手动复制', noShare: '这个浏览器不支持系统分享，请复制链接',
-    anyone: '（未写名字）', def: '默认：',
+    anyone: '（未写名字）', defChip: '默认', msgPh: '写下你想说的话…',
     pvLabel: '实时预览', pvHide: '收起', pvShow: '展开',
     pvNote: '这里跳过了拆信封，也不放音乐。<br>可以在里面点一点、滑一滑，试试互动效果。',
     shareText: (th, to, url) => `${th.emoji} ${to ? to + '，' : ''}给你准备了一张${th.cardName.zh}，点开看看 ✨\n${url}`
@@ -256,12 +257,12 @@ const UI = {
     h1: th => `Make a ${th.cardName.en}`,
     sub: 'Pick an occasion, add a name and a few words, get a personal link,<br>and send it on WhatsApp, WeChat or Instagram.',
     themeLabel: 'Occasion', langLabel: 'Card language', toLabel: 'To', msgLabel: 'Message', fromLabel: 'From',
-    msgHint: 'Leave empty for the default message; line breaks are kept', make: '✦ Create card link', ready: 'Your card is ready',
+    msgHint: 'Edit it right here; line breaks are kept', make: '✦ Create card link', ready: 'Your card is ready',
     preview: '👀 Preview', copy: '🔗 Copy link', wa: '💬 WhatsApp', share: '📤 Share…', rec: '🎬 Recording version (for video)',
     note: 'WeChat: copy the link and paste it in the chat. Instagram: paste the link in a DM.<br>For a video: open the recording version and screen-record it (turn silent mode off). For a picture: open the card and tap “Save image”.<br>The message lives in the link, so anyone with the link can read it.',
     made: 'Cards you made', clear: 'Clear', empty: 'None yet. Links you make are kept on this device so you can send them one by one.',
     copied: 'Link copied ✦', copyFail: 'Copy failed — long-press the link above to copy it', noShare: 'Sharing isn’t supported here — copy the link instead',
-    anyone: '(no name)', def: 'Default: ',
+    anyone: '(no name)', defChip: 'Default', msgPh: 'Write your message…',
     pvLabel: 'Live preview', pvHide: 'Hide', pvShow: 'Show',
     pvNote: 'The envelope and music are skipped here.<br>Tap or swipe inside to try the effects.',
     shareText: (th, to, url) => `${th.emoji} ${to ? to + ', ' : ''}I made you a little ${th.cardName.en} ✨ Open it here:\n${url}`
@@ -309,15 +310,21 @@ function apply() {
   });
   const acc = (th.vars && th.vars.accent) || '#f3c97a';
   document.documentElement.style.setProperty('--gold', acc);
-  msgEl.placeholder = t.def + th.message[lang];
+  msgEl.placeholder = t.msgPh;
+  // the field starts with this occasion's default message; text the user wrote is never replaced
+  if (isStock(msgEl.value)) { msgEl.value = th.message[lang]; count(); }
   const chips = $('#chips');
   chips.textContent = '';
-  th.presets[lang].forEach(([name, text]) => {
+  const presets = th.presets[lang].some(([, text]) => text === th.message[lang])
+    ? th.presets[lang] : [[t.defChip, th.message[lang]], ...th.presets[lang]];
+  presets.forEach(([name, text]) => {
     const b = document.createElement('button');
-    b.type = 'button'; b.className = 'chip'; b.textContent = name;
-    b.addEventListener('click', () => { msgEl.value = text; count(); refreshPreview(); msgEl.focus(); });
+    b.type = 'button'; b.className = 'chip'; b.dataset.text = text;
+    b.textContent = text === th.message[lang] ? t.defChip : name;
+    b.addEventListener('click', () => { msgEl.value = text; count(); markChips(); refreshPreview(); msgEl.focus(); });
     chips.appendChild(b);
   });
+  markChips();
   renderSent();
   $('#pvToggle').textContent = pvCollapsed ? t.pvShow : t.pvHide;
   refreshPreview();
@@ -335,7 +342,7 @@ function refreshPreview() {
     pvKey = key;
     const u = new URL(`./${theme}/`, location.href);
     const p = new URLSearchParams({ lang, preview: '1' });
-    const to = toEl.value.trim(), from = fromEl.value.trim(), msg = msgEl.value.trim();
+    const to = toEl.value.trim(), from = fromEl.value.trim(), msg = msgParam();
     if (to) p.set('to', to);
     if (from) p.set('from', from);
     if (msg) p.set('msg', msg);
@@ -354,7 +361,15 @@ $('#pvToggle').addEventListener('click', () => {
 });
 
 function count() { $('#count').textContent = `${msgEl.value.length}/300`; }
-msgEl.addEventListener('input', count);
+msgEl.addEventListener('input', () => { count(); markChips(); });
+function markChips() {
+  document.querySelectorAll('#chips .chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.text === msgEl.value.trim())));
+}
+// default + preset texts of every occasion and language: switching occasion swaps these, keeps anything custom
+const STOCK = new Set(Object.values(THEMES).flatMap(th => ['zh', 'en'].flatMap(l => [th.message[l], ...th.presets[l].map(p => p[1])])));
+const isStock = v => !v.trim() || STOCK.has(v.trim());
+// the default message isn't put in the link: the card shows it anyway, and the link stays short
+const msgParam = () => { const m = msgEl.value.trim(); return m && m !== THEMES[theme].message[lang] ? m : ''; };
 document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
   lang = b.dataset.lang; store.set('cards.lang', lang); apply();
 }));
@@ -362,7 +377,7 @@ document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click'
 function buildUrl() {
   const u = new URL(`./${theme}/`, location.href);
   const p = new URLSearchParams();
-  const to = toEl.value.trim(), msg = msgEl.value.trim(), from = fromEl.value.trim();
+  const to = toEl.value.trim(), msg = msgParam(), from = fromEl.value.trim();
   if (to) p.set('to', to);
   if (from) p.set('from', from);
   if (msg) p.set('msg', msg);

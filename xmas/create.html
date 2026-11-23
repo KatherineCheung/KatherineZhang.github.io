@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070b1d">
+<title>圣诞贺卡生成器 · Christmas Card Maker</title>
+<meta name="description" content="写下名字和祝福，生成一张会动的圣诞贺卡链接，发到 WhatsApp、微信、Instagram。">
+<style>
+  :root{
+    --gold:#f3c97a; --gold-soft:#ffe3a6; --cream:#fbf3e4; --muted:rgba(251,243,228,.62);
+    --night:#070b1d; --panel:rgba(255,246,230,.06); --line:rgba(243,201,122,.28);
+    --serif:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,'Songti SC','STSong','Noto Serif SC',serif;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    min-height:100vh;min-height:100dvh;color:var(--cream);font-family:var(--sans);
+    background-color:var(--night);
+    background-image:
+      radial-gradient(1000px 560px at 50% 115%, rgba(255,166,84,.20), transparent 62%),
+      radial-gradient(700px 480px at 85% -8%, rgba(110,132,255,.14), transparent 62%),
+      linear-gradient(180deg,#050816 0%,#0a1330 50%,#171531 100%);
+    background-attachment:fixed;
+    -webkit-font-smoothing:antialiased;
+  }
+  main{max-width:560px;margin:0 auto;padding:max(28px,env(safe-area-inset-top)) 16px max(40px,env(safe-area-inset-bottom))}
+  header{text-align:center;margin-bottom:22px}
+  header .star{color:var(--gold);font-size:1.1rem;text-shadow:0 0 12px rgba(255,200,120,.8)}
+  h1{margin:.2em 0 .15em;font-family:var(--serif);font-weight:500;font-size:clamp(1.6rem,6vw,2.1rem);color:#f7d48e;letter-spacing:.04em}
+  header p{margin:0;color:var(--muted);font-size:.92rem;line-height:1.6}
+
+  .panel{
+    background:var(--panel);border:1px solid var(--line);border-radius:18px;
+    padding:20px 18px;margin-bottom:16px;
+    box-shadow:0 20px 50px -16px rgba(0,0,0,.55);
+  }
+  label,.label{display:block;font-size:.82rem;letter-spacing:.08em;color:var(--gold);margin:0 0 7px}
+  .field{margin-bottom:16px}
+  .field:last-child{margin-bottom:0}
+  .hint{font-size:.78rem;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between;gap:10px}
+  input[type=text],textarea{
+    width:100%;font:inherit;font-size:16px;color:var(--cream);
+    background:rgba(5,8,22,.55);border:1px solid rgba(243,201,122,.22);border-radius:12px;
+    padding:11px 13px;outline:none;transition:border-color .2s, box-shadow .2s;
+  }
+  textarea{min-height:120px;resize:vertical;line-height:1.6}
+  input[type=text]:focus,textarea:focus{border-color:rgba(243,201,122,.65);box-shadow:0 0 0 3px rgba(243,201,122,.12)}
+  ::placeholder{color:rgba(251,243,228,.35)}
+
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:rgba(5,8,22,.45)}
+  .seg button{
+    appearance:none;border:0;background:none;color:var(--muted);font:inherit;font-size:.88rem;
+    padding:7px 16px;border-radius:999px;cursor:pointer;
+  }
+  .seg button[aria-pressed=true]{background:rgba(243,201,122,.18);color:var(--gold-soft)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+  .chip{
+    appearance:none;font:inherit;font-size:.78rem;cursor:pointer;
+    color:var(--muted);background:rgba(255,220,160,.04);
+    border:1px solid rgba(243,201,122,.2);border-radius:999px;padding:6px 11px;
+  }
+  .chip:hover{color:var(--gold-soft);border-color:rgba(243,201,122,.5)}
+
+  .btn{
+    appearance:none;font:inherit;font-size:.95rem;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:12px 16px;border-radius:12px;border:1px solid var(--line);
+    color:var(--gold-soft);background:rgba(255,220,160,.06);text-decoration:none;
+    transition:background .2s,border-color .2s;
+  }
+  .btn:hover{background:rgba(255,220,160,.12);border-color:rgba(243,201,122,.55)}
+  .btn.primary{
+    width:100%;font-weight:600;letter-spacing:.06em;color:#2a1a06;border:0;
+    background:linear-gradient(180deg,#ffe3a6,#f0b85e);box-shadow:0 10px 26px -8px rgba(255,180,80,.55);
+  }
+  .btn.primary:hover{filter:brightness(1.05)}
+  .btn.wa{color:#d9ffe6;border-color:rgba(80,220,130,.4);background:rgba(37,211,102,.12)}
+  .btn.wa:hover{background:rgba(37,211,102,.2)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .row .btn{width:100%}
+
+  #result[hidden]{display:none}
+  .link{
+    font-size:.8rem;line-height:1.5;color:var(--muted);word-break:break-all;
+    background:rgba(5,8,22,.55);border:1px dashed rgba(243,201,122,.25);border-radius:10px;padding:10px 12px;
+    max-height:5.2em;overflow:auto;
+  }
+  .note{font-size:.78rem;color:var(--muted);line-height:1.6;margin:12px 0 0}
+
+  .sent-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .sent-head button{appearance:none;background:none;border:0;color:var(--muted);font:inherit;font-size:.78rem;cursor:pointer;text-decoration:underline}
+  ul.sent{list-style:none;margin:0;padding:0}
+  ul.sent li{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid rgba(243,201,122,.12)}
+  ul.sent li:first-child{border-top:0}
+  ul.sent .who{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.92rem}
+  ul.sent .who small{color:var(--muted);margin-left:6px}
+  ul.sent .btn{padding:6px 11px;font-size:.78rem;border-radius:9px}
+  .empty{color:var(--muted);font-size:.85rem;margin:0}
+
+  .toast{
+    position:fixed;left:50%;bottom:max(22px,env(safe-area-inset-bottom));transform:translate(-50%,20px);
+    background:rgba(20,22,46,.92);border:1px solid var(--line);color:var(--gold-soft);
+    padding:10px 18px;border-radius:999px;font-size:.88rem;opacity:0;pointer-events:none;
+    transition:opacity .3s, transform .3s;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="star">✦</div>
+    <h1 data-i18n="h1">做一张圣诞贺卡</h1>
+    <p data-i18n="sub">写下名字和祝福，生成专属链接，<br>发给 WhatsApp、微信、Instagram 上的 TA。</p>
+  </header>
+
+  <section class="panel">
+    <div class="field">
+      <span class="label" data-i18n="langLabel">贺卡语言</span>
+      <div class="seg" role="group" aria-label="Language">
+        <button type="button" data-lang="zh" aria-pressed="true">中文</button>
+        <button type="button" data-lang="en" aria-pressed="false">English</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="to" data-i18n="toLabel">送给谁</label>
+      <input id="to" type="text" maxlength="24" autocomplete="off" placeholder="妈妈 / Ran / Grandpa">
+    </div>
+    <div class="field">
+      <label for="msg" data-i18n="msgLabel">祝福语</label>
+      <textarea id="msg" maxlength="300"></textarea>
+      <div class="hint"><span data-i18n="msgHint">留空会用默认祝福；可以换行</span><span id="count">0/300</span></div>
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="field">
+      <label for="from" data-i18n="fromLabel">署名</label>
+      <input id="from" type="text" maxlength="24" autocomplete="off" placeholder="Ran">
+    </div>
+    <button id="make" class="btn primary" type="button" data-i18n="make">✦ 生成贺卡链接</button>
+  </section>
+
+  <section class="panel" id="result" hidden>
+    <span class="label" data-i18n="ready">贺卡已就绪</span>
+    <div class="link" id="link"></div>
+    <div class="row">
+      <a class="btn" id="preview" target="_blank" rel="noopener" data-i18n="preview">👀 预览</a>
+      <button class="btn" id="copy" type="button" data-i18n="copy">🔗 复制链接</button>
+      <a class="btn wa" id="wa" target="_blank" rel="noopener" data-i18n="wa">💬 WhatsApp</a>
+      <button class="btn" id="share" type="button" data-i18n="share">📤 更多分享</button>
+    </div>
+    <p class="note" data-i18n="note">微信：复制链接后粘贴到聊天里。Instagram：在私信里粘贴链接。<br>祝福语就写在链接里，拿到链接的人都能看到。</p>
+  </section>
+
+  <section class="panel">
+    <div class="sent-head">
+      <span class="label" style="margin:0" data-i18n="made">已生成的贺卡</span>
+      <button type="button" id="clear" data-i18n="clear">清空</button>
+    </div>
+    <ul class="sent" id="sent"></ul>
+    <p class="empty" id="empty" data-i18n="empty">还没有。生成的链接会保存在这台设备上，方便一个个发出去。</p>
+  </section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+
+const UI = {
+  zh: {
+    h1: '做一张圣诞贺卡',
+    sub: '写下名字和祝福，生成专属链接，<br>发给 WhatsApp、微信、Instagram 上的 TA。',
+    langLabel: '贺卡语言', toLabel: '送给谁', msgLabel: '祝福语', fromLabel: '署名',
+    msgHint: '留空会用默认祝福；可以换行', make: '✦ 生成贺卡链接', ready: '贺卡已就绪',
+    preview: '👀 预览', copy: '🔗 复制链接', wa: '💬 WhatsApp', share: '📤 更多分享',
+    note: '微信：复制链接后粘贴到聊天里。Instagram：在私信里粘贴链接。<br>祝福语就写在链接里，拿到链接的人都能看到。',
+    made: '已生成的贺卡', clear: '清空', empty: '还没有。生成的链接会保存在这台设备上，方便一个个发出去。',
+    copied: '链接已复制 ✦', copyFail: '复制失败，请长按上面的链接手动复制', noShare: '这个浏览器不支持系统分享，请复制链接',
+    placeholder: '默认：谢谢你这一年的每一次陪伴。愿你的新年，像这场雪一样干净又美好。',
+    anyone: '（未写名字）',
+    shareText: (to, url) => `🎄 ${to ? to + '，' : ''}给你准备了一张圣诞贺卡，点开看看 ✨\n${url}`,
+    presets: [
+      ['温暖', '谢谢你这一年的每一次陪伴。愿你的新年，像这场雪一样干净又美好。'],
+      ['家人', '一年又一年，最想说的还是：谢谢你们一直在。圣诞快乐，新的一年平安健康！'],
+      ['朋友', '这一年辛苦啦！愿你新的一年少点烦恼，多点好运，想见的人都能见到。'],
+      ['俏皮', '圣诞老人说他今年太忙，派我来送祝福 🎅 收下这颗星星，新年一定闪闪发光！']
+    ]
+  },
+  en: {
+    h1: 'Make a Christmas card',
+    sub: 'Add a name and a few words, get a personal link,<br>and send it on WhatsApp, WeChat or Instagram.',
+    langLabel: 'Card language', toLabel: 'To', msgLabel: 'Message', fromLabel: 'From',
+    msgHint: 'Leave empty for the default message; line breaks are kept', make: '✦ Create card link', ready: 'Your card is ready',
+    preview: '👀 Preview', copy: '🔗 Copy link', wa: '💬 WhatsApp', share: '📤 Share…',
+    note: 'WeChat: copy the link and paste it in the chat. Instagram: paste the link in a DM.<br>The message lives in the link, so anyone with the link can read it.',
+    made: 'Cards you made', clear: 'Clear', empty: 'None yet. Links you make are kept on this device so you can send them one by one.',
+    copied: 'Link copied ✦', copyFail: 'Copy failed — long-press the link above to copy it', noShare: 'Sharing isn’t supported here — copy the link instead',
+    placeholder: 'Default: Thank you for every moment of companionship this year. May your new year be as pure and beautiful as this falling snow.',
+    anyone: '(no name)',
+    shareText: (to, url) => `🎄 ${to ? to + ', ' : ''}I made you a little Christmas card ✨ Open it here:\n${url}`,
+    presets: [
+      ['Warm', 'Thank you for every moment of companionship this year. May your new year be as pure and beautiful as this falling snow.'],
+      ['Family', 'Another year, and the thing I most want to say is still: thank you for always being there. Merry Christmas, and a healthy, happy new year!'],
+      ['Friend', 'You made this year so much better. Here’s to fewer worries, more luck, and more time together in the new year!'],
+      ['Playful', 'Santa said he was too busy this year, so he sent me instead 🎅 Keep this star — your new year is going to sparkle!']
+    ]
+  }
+};
+
+let lang = store.get('xmas.lang', 'zh');
+let current = null;   // { to, url }
+
+const toEl = $('#to'), msgEl = $('#msg'), fromEl = $('#from');
+fromEl.value = store.get('xmas.from', '');
+
+function applyLang() {
+  const t = UI[lang];
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const v = t[el.dataset.i18n];
+    if (typeof v === 'string') el.innerHTML = v;   // static strings defined above only
+  });
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+  msgEl.placeholder = t.placeholder;
+  const chips = $('#chips');
+  chips.textContent = '';
+  t.presets.forEach(([name, text]) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = name;
+    b.addEventListener('click', () => { msgEl.value = text; count(); msgEl.focus(); });
+    chips.appendChild(b);
+  });
+  renderSent();
+}
+
+function count() { $('#count').textContent = `${msgEl.value.length}/300`; }
+msgEl.addEventListener('input', count);
+
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+  lang = b.dataset.lang; store.set('xmas.lang', lang); applyLang();
+}));
+
+function buildUrl() {
+  const u = new URL('./', location.href);
+  const p = new URLSearchParams();
+  const to = toEl.value.trim(), msg = msgEl.value.trim(), from = fromEl.value.trim();
+  if (to) p.set('to', to);
+  if (from) p.set('from', from);
+  if (msg) p.set('msg', msg);
+  p.set('lang', lang);
+  u.search = p.toString();
+  return { to, url: u.toString() };
+}
+
+let toastTimer = 0;
+function toast(text) {
+  const el = $('#toast');
+  el.textContent = text; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); toast(UI[lang].copied); }
+  catch {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch {}
+    ta.remove();
+    toast(ok ? UI[lang].copied : UI[lang].copyFail);
+  }
+}
+
+function show(card) {
+  current = card;
+  $('#result').hidden = false;
+  $('#link').textContent = card.url;
+  $('#preview').href = card.url;
+  $('#wa').href = 'https://wa.me/?text=' + encodeURIComponent(UI[lang].shareText(card.to, card.url));
+  $('#result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+$('#make').addEventListener('click', () => {
+  store.set('xmas.from', fromEl.value.trim());
+  const card = buildUrl();
+  show(card);
+  const list = store.get('xmas.sent', []).filter(x => x.url !== card.url);
+  list.unshift({ to: card.to, url: card.url, lang, at: Date.now() });
+  store.set('xmas.sent', list.slice(0, 50));
+  renderSent();
+});
+
+$('#copy').addEventListener('click', () => current && copy(current.url));
+$('#share').addEventListener('click', async () => {
+  if (!current) return;
+  if (!navigator.share) { toast(UI[lang].noShare); return; }
+  try { await navigator.share({ title: '🎄', text: UI[lang].shareText(current.to, '').trim(), url: current.url }); } catch {}
+});
+
+function renderSent() {
+  const list = store.get('xmas.sent', []);
+  const ul = $('#sent');
+  ul.textContent = '';
+  $('#empty').hidden = list.length > 0;
+  $('#clear').hidden = list.length === 0;
+  list.forEach(item => {
+    const li = document.createElement('li');
+    const who = document.createElement('span'); who.className = 'who';
+    who.textContent = item.to || UI[lang].anyone;
+    const tag = document.createElement('small'); tag.textContent = item.lang === 'en' ? 'EN' : '中文';
+    who.appendChild(tag);
+    const open = document.createElement('a'); open.className = 'btn'; open.href = item.url; open.target = '_blank'; open.rel = 'noopener'; open.textContent = '👀';
+    const cp = document.createElement('button'); cp.type = 'button'; cp.className = 'btn'; cp.textContent = '🔗';
+    cp.addEventListener('click', () => copy(item.url));
+    const wa = document.createElement('a'); wa.className = 'btn wa'; wa.target = '_blank'; wa.rel = 'noopener'; wa.textContent = '💬';
+    wa.href = 'https://wa.me/?text=' + encodeURIComponent(UI[item.lang === 'en' ? 'en' : 'zh'].shareText(item.to, item.url));
+    li.append(who, open, cp, wa);
+    ul.appendChild(li);
+  });
+}
+$('#clear').addEventListener('click', () => { store.set('xmas.sent', []); renderSent(); });
+
+applyLang();
+count();
+})();
+</script>
+</body>
+</html>

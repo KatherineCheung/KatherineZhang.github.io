@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070b1d">
+<title>Merry Christmas ✦</title>
+<meta name="description" content="A little Christmas surprise for you. Tap the envelope to open it.">
+<!-- Link previews (WhatsApp / Instagram / iMessage). og:image must be an absolute URL:
+     update it if the site is hosted somewhere else. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="✦ A Christmas surprise for you">
+<meta property="og:description" content="Tap to open your Christmas card 🎄">
+<meta property="og:image" content="https://katherinecheung.github.io/KatherineZhang.github.io/xmas/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<!-- Optional web fonts, loaded without blocking: where Google Fonts is unreachable
+     (e.g. mainland China / WeChat) the card renders right away with system fonts. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Great+Vibes&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+  :root{
+    --gold:#f3c97a;
+    --gold-soft:#ffe3a6;
+    --cream:#fbf3e4;
+    --night:#070b1d;
+    /* Latin fonts first; Chinese characters fall through to Kai / Song faces */
+    --script:'Great Vibes','Snell Roundhand','Segoe Script','Apple Chancery','Brush Script MT','Kaiti SC','STKaiti','KaiTi',cursive;
+    --serif:'Cormorant Garamond','Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,'Songti SC','STSong','Noto Serif SC','Noto Serif CJK SC','SimSun',serif;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{margin:0;height:100%}
+  body{
+    min-height:100vh;min-height:100dvh;
+    overflow-x:hidden;
+    color:var(--cream);
+    font-family:var(--serif);
+    background-color:var(--night);
+    background-image:
+      radial-gradient(1100px 620px at 50% 112%, rgba(255,166,84,.24), transparent 62%),
+      radial-gradient(700px 480px at 85% -8%, rgba(110,132,255,.16), transparent 62%),
+      radial-gradient(600px 420px at 8% 12%, rgba(160,110,255,.10), transparent 60%),
+      linear-gradient(180deg,#050816 0%,#0a1330 46%,#171531 78%,#221a2c 100%);
+    background-attachment:fixed;
+    -webkit-font-smoothing:antialiased;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;-webkit-user-select:none;
+  }
+  canvas.layer{position:fixed;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+  #sky{z-index:0}
+  #fx{z-index:6}
+
+  /* soft snowy hills + warm hearth glow */
+  .ground{
+    position:fixed;left:0;right:0;bottom:0;height:32vh;z-index:1;pointer-events:none;
+    background:
+      radial-gradient(62% 100% at 26% 100%, rgba(214,226,255,.11), transparent 72%),
+      radial-gradient(58% 86% at 80% 100%, rgba(214,226,255,.08), transparent 72%),
+      radial-gradient(40% 70% at 50% 100%, rgba(255,190,120,.10), transparent 75%);
+  }
+
+  main#stage{
+    position:relative;z-index:3;
+    min-height:100vh;min-height:100dvh;
+    display:grid;place-items:center;
+    padding:max(22px,env(safe-area-inset-top)) 16px max(28px,env(safe-area-inset-bottom));
+  }
+  main#stage > section{grid-area:1/1}
+
+  /* ---------- INTRO: wax-sealed envelope ---------- */
+  .intro{
+    display:flex;flex-direction:column;align-items:center;gap:clamp(30px,7vh,56px);
+    transition:opacity 1s ease, transform 1.2s cubic-bezier(.2,.7,.2,1), filter 1s ease;
+  }
+  .intro.is-leaving{opacity:0;transform:translateY(-34px) scale(1.06);filter:blur(7px);pointer-events:none}
+
+  .envelope{
+    --w:min(80vw,360px);
+    appearance:none;-webkit-appearance:none;border:0;padding:0;margin:0;background:none;font:inherit;color:inherit;
+    position:relative;display:block;cursor:pointer;
+    width:var(--w);height:calc(var(--w) * .66);
+    perspective:1100px;
+    animation:float 6s ease-in-out infinite;
+    outline:none;
+  }
+  .envelope:focus-visible{outline:2px solid rgba(243,201,122,.7);outline-offset:14px;border-radius:10px}
+  .envelope::before{
+    content:"";position:absolute;inset:-22% -16%;z-index:-1;border-radius:50%;
+    background:radial-gradient(closest-side, rgba(255,204,128,.50), rgba(255,170,80,.14) 62%, transparent);
+    filter:blur(18px);
+    animation:breathe 3.4s ease-in-out infinite;
+  }
+  .env-back{
+    position:absolute;inset:0;border-radius:8px;
+    background:linear-gradient(170deg,#ead5ab,#d6b985);
+    box-shadow:0 28px 50px -14px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .letter{
+    position:absolute;left:7%;right:7%;top:6%;height:86%;z-index:2;
+    border-radius:4px;
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgba(255,255,255,.7), transparent 60%),
+      linear-gradient(#fffaf0,#f5e8cf);
+    box-shadow:0 2px 10px rgba(0,0,0,.18);
+    display:flex;flex-direction:column;align-items:center;padding-top:9%;
+    color:#8b5b2c;text-align:center;
+    transform:translateY(0);
+    transition:transform 1.15s cubic-bezier(.2,.8,.2,1) 1s;
+  }
+  .letter .l-top{font-size:calc(var(--w) * .032);letter-spacing:.32em;text-transform:uppercase;opacity:.75}
+  .letter .l-script{font-family:var(--script);font-size:calc(var(--w) * .105);line-height:1.1;margin-top:.15em;color:#a86d2e}
+  .letter .l-star{color:#d8a24c;font-size:calc(var(--w) * .05);margin-top:.1em}
+  .is-opening .letter{transform:translateY(-58%)}
+
+  .env-front{
+    position:absolute;inset:0;z-index:3;pointer-events:none;border-radius:0 0 8px 8px;
+    clip-path:polygon(0 0,50% 54%,100% 0,100% 100%,0 100%);
+    background:linear-gradient(0deg,#e6cfa1,#f0ddb6);
+  }
+  .env-front::before,.env-front::after{content:"";position:absolute;inset:0}
+  .env-front::before{clip-path:polygon(0 0,50% 54%,0 100%);background:linear-gradient(100deg,rgba(120,78,28,.16),rgba(120,78,28,0) 60%)}
+  .env-front::after{clip-path:polygon(100% 0,50% 54%,100% 100%);background:linear-gradient(260deg,rgba(120,78,28,.16),rgba(120,78,28,0) 60%)}
+
+  .env-flap{
+    position:absolute;left:0;top:0;width:100%;height:58%;z-index:4;
+    transform-origin:50% 0;transform:rotateX(0deg);
+    transition:transform .9s cubic-bezier(.45,.1,.2,1) .45s;
+    filter:drop-shadow(0 4px 4px rgba(80,50,10,.25));
+  }
+  .env-flap i{
+    position:absolute;inset:0;border-radius:8px 8px 0 0;
+    clip-path:polygon(0 0,100% 0,50% 100%);
+    background:linear-gradient(180deg,#f4e4c2,#e0c693);
+  }
+  .is-opening .env-flap{transform:rotateX(180deg)}
+  .flap-behind .env-flap{z-index:1}
+  .flap-behind .env-flap i{background:linear-gradient(0deg,#d8bb88,#c9a771)}
+
+  .seal{
+    position:absolute;left:50%;top:57%;z-index:5;
+    width:21%;aspect-ratio:1/1;
+    transform:translate(-50%,-50%);
+    display:grid;place-items:center;
+    border-radius:47% 53% 49% 51% / 52% 46% 54% 48%;
+    background:radial-gradient(circle at 34% 28%, #e8665d 0%, #b8302a 36%, #8a1616 70%, #5a0a0a 100%);
+    box-shadow:0 6px 12px rgba(60,0,0,.5), inset 0 -3px 6px rgba(0,0,0,.35), inset 0 3px 5px rgba(255,170,150,.35);
+    animation:sealPulse 3.4s ease-in-out infinite;
+  }
+  .seal::before{
+    content:"";position:absolute;inset:13%;border-radius:50%;
+    box-shadow:inset 0 2px 3px rgba(0,0,0,.38), 0 1px 1px rgba(255,180,160,.28);
+  }
+  .seal svg{width:60%;height:60%;position:relative}
+  .is-opening .seal{animation:sealOff .75s cubic-bezier(.5,0,.75,0) forwards}
+
+  .hint{
+    margin:0;text-align:center;
+    font-size:clamp(1.02rem,4.2vw,1.25rem);letter-spacing:.06em;line-height:1.5;
+    color:rgba(255,240,215,.82);
+    animation:hintBreathe 3.4s ease-in-out infinite;
+    transition:opacity .6s ease;
+  }
+  .hint .shine{
+    display:inline-block;font-style:italic;font-weight:500;
+    background:linear-gradient(90deg,#c99b52 0%,#fff2cc 25%,#c99b52 50%,#fff2cc 75%,#c99b52 100%);
+    background-size:200% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:shimmer 5s linear infinite;
+  }
+  .hint .spark{color:var(--gold);opacity:.8;font-style:normal}
+  .intro.is-opened .hint{opacity:0}
+
+  /* ---------- SCENE: particle tree + card ---------- */
+  .scene{
+    width:100%;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:clamp(6px,2vh,20px);
+    opacity:0;visibility:hidden;
+    transition:opacity 1.4s ease, visibility 0s linear 1.4s;
+  }
+  .scene.is-visible{opacity:1;visibility:visible;transition:opacity 1.4s ease}
+  .tree-wrap{width:min(82vw,380px);height:clamp(190px,38vh,430px);height:clamp(190px,38svh,430px);position:relative}
+  #tree{width:100%;height:100%;display:block}
+
+  .card{
+    position:relative;
+    width:min(90vw,520px);
+    padding:clamp(22px,5.5vw,38px) clamp(20px,6vw,42px) clamp(18px,4.5vw,30px);
+    border-radius:20px;
+    background:linear-gradient(180deg,rgba(255,246,230,.10),rgba(255,246,230,.035));
+    border:1px solid rgba(243,201,122,.30);
+    box-shadow:0 24px 60px -10px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08), 0 0 50px -10px rgba(255,190,110,.18);
+    backdrop-filter:blur(10px) saturate(120%);-webkit-backdrop-filter:blur(10px) saturate(120%);
+    opacity:0;transform:translateY(26px);
+    transition:opacity 1.2s ease .5s, transform 1.4s cubic-bezier(.2,.8,.2,1) .5s;
+  }
+  .card::before{
+    content:"";position:absolute;inset:8px;border-radius:14px;pointer-events:none;
+    border:1px solid rgba(243,201,122,.14);
+  }
+  .card::after{ /* tiny corner flourishes */
+    content:"✦";position:absolute;top:-0.62em;left:50%;transform:translateX(-50%);
+    color:var(--gold);font-size:1.05rem;text-shadow:0 0 12px rgba(255,200,120,.8);
+    background:radial-gradient(closest-side,#141633 60%,transparent);padding:0 .5em;
+  }
+  .scene.is-visible .card{opacity:1;transform:none}
+
+  .card h1{
+    margin:0;text-align:center;font-weight:400;
+    font-family:var(--script);
+    font-size:clamp(2.15rem,8.6vw,3.3rem);line-height:1.2;
+    color:#f7d48e;
+    text-shadow:0 0 18px rgba(255,190,100,.45), 0 0 2px rgba(255,232,185,.6);
+  }
+  .divider{
+    display:flex;align-items:center;justify-content:center;gap:12px;
+    width:72%;margin:.35em auto .95em;
+    color:var(--gold);font-size:.8rem;
+    opacity:0;transform:scaleX(.3);
+    transition:opacity .9s ease, transform 1s cubic-bezier(.2,.8,.2,1);
+  }
+  .divider::before,.divider::after{content:"";flex:1;height:1px}
+  .divider::before{background:linear-gradient(90deg,transparent,rgba(243,201,122,.75))}
+  .divider::after{background:linear-gradient(270deg,transparent,rgba(243,201,122,.75))}
+  .divider.show{opacity:1;transform:none}
+
+  .msg{
+    margin:0;text-align:center;
+    font-size:clamp(1.12rem,4.3vw,1.36rem);line-height:1.78;font-weight:500;letter-spacing:.012em;
+    color:#f7eedd;
+  }
+  .sig{
+    margin:.55em 0 0;text-align:right;
+    font-family:var(--script);font-size:clamp(1.75rem,6.6vw,2.35rem);line-height:1.2;
+    color:var(--gold);
+    text-shadow:0 0 14px rgba(255,190,100,.4);
+    padding-right:.2em;
+  }
+
+  .word{white-space:nowrap}
+  .ch{opacity:0}
+  .ch.on{opacity:1;animation:ink .6s ease-out}
+  .caret{
+    display:inline-block;width:2px;height:1em;margin-right:-2px;
+    vertical-align:-.12em;border-radius:1px;
+    background:var(--gold-soft);box-shadow:0 0 8px #ffcf7a;
+    animation:blink 1s steps(1) infinite;
+  }
+  .caret.done{animation:caretOut 1.6s ease forwards}
+
+  .replay{
+    appearance:none;-webkit-appearance:none;cursor:pointer;
+    display:block;margin:1.15em auto 0;padding:.7em 1.4em;
+    font:500 .74rem/1 var(--serif);letter-spacing:.26em;text-transform:uppercase;
+    color:rgba(243,201,122,.85);background:rgba(255,220,160,.04);
+    border:1px solid rgba(243,201,122,.3);border-radius:999px;
+    opacity:0;pointer-events:none;transition:opacity .9s ease, background .3s, border-color .3s;
+  }
+  .replay.show{opacity:1;pointer-events:auto}
+  .replay:hover{background:rgba(255,220,160,.1);border-color:rgba(243,201,122,.6)}
+
+  /* ---------- floating UI ---------- */
+  .sound{
+    position:fixed;z-index:8;
+    top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));
+    width:46px;height:46px;border-radius:50%;padding:0;cursor:pointer;
+    display:grid;place-items:center;
+    color:var(--gold);
+    background:rgba(10,15,36,.45);
+    border:1px solid rgba(243,201,122,.35);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    box-shadow:0 0 20px -4px rgba(255,190,110,.35);
+    opacity:0;transform:scale(.8);transition:opacity .8s ease, transform .8s cubic-bezier(.2,.8,.2,1);
+  }
+  .sound.show{opacity:1;transform:none}
+  .sound .bars{display:flex;align-items:flex-end;gap:3px;height:16px}
+  .sound .bars i{width:3px;border-radius:2px;background:currentColor;animation:eq 1.1s ease-in-out infinite}
+  .sound .bars i:nth-child(1){height:40%;animation-delay:-.2s}
+  .sound .bars i:nth-child(2){height:100%;animation-delay:-.5s}
+  .sound .bars i:nth-child(3){height:60%;animation-delay:-.8s}
+  .sound .bars i:nth-child(4){height:80%;animation-delay:-.35s}
+  .sound.muted .bars i{animation:none;height:3px!important;opacity:.6}
+
+  .tip{
+    position:fixed;z-index:7;left:50%;bottom:max(16px,env(safe-area-inset-bottom));
+    transform:translateX(-50%);margin:0;white-space:nowrap;pointer-events:none;
+    font-size:.78rem;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,236,200,.62);
+    opacity:0;transition:opacity 1.4s ease;
+  }
+  .tip.show{opacity:1}
+
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  /* ---------- keyframes ---------- */
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  @keyframes breathe{0%,100%{opacity:.45;transform:scale(.94)}50%{opacity:1;transform:scale(1.05)}}
+  @keyframes hintBreathe{0%,100%{opacity:.6}50%{opacity:1}}
+  @keyframes shimmer{to{background-position:-200% 0}}
+  @keyframes sealPulse{
+    0%,100%{box-shadow:0 6px 12px rgba(60,0,0,.5), inset 0 -3px 6px rgba(0,0,0,.35), inset 0 3px 5px rgba(255,170,150,.35), 0 0 0 rgba(255,140,100,0)}
+    50%{box-shadow:0 6px 12px rgba(60,0,0,.5), inset 0 -3px 6px rgba(0,0,0,.35), inset 0 3px 5px rgba(255,170,150,.35), 0 0 26px rgba(255,150,100,.6)}
+  }
+  @keyframes sealOff{
+    0%{transform:translate(-50%,-50%) scale(1)}
+    30%{transform:translate(-50%,-50%) scale(1.14)}
+    100%{transform:translate(-50%,40%) scale(.45) rotate(-38deg);opacity:0}
+  }
+  @keyframes ink{from{opacity:0;filter:blur(4px);text-shadow:0 0 18px #ffd890}to{opacity:1;filter:blur(0)}}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+  @keyframes caretOut{0%,40%{opacity:1}100%{opacity:0}}
+  @keyframes eq{0%,100%{transform:scaleY(.45)}50%{transform:scaleY(1)}}
+
+  /* ---------- responsive ---------- */
+  @media (min-width:900px) and (min-height:600px){
+    .scene{flex-direction:row;gap:clamp(28px,5vw,84px)}
+    .tree-wrap{width:min(36vw,430px);height:min(72vh,580px)}
+    .card{width:min(44vw,500px)}
+  }
+  @media (max-height:700px) and (orientation:portrait){
+    .tree-wrap{height:clamp(170px,31vh,300px);height:clamp(170px,31svh,300px)}
+    .msg{line-height:1.65}
+  }
+  @media (orientation:landscape) and (max-height:560px){
+    .intro{gap:20px}
+    .envelope{--w:min(46vw,300px)}
+    .scene{flex-direction:row;gap:4vw}
+    .tree-wrap{width:34vw;height:80vh}
+    .card{width:min(56vw,470px);padding:18px 26px 14px}
+    .card h1{font-size:clamp(1.7rem,5vw,2.3rem)}
+    .divider{margin:.2em auto .5em}
+    .msg{font-size:1.02rem;line-height:1.55}
+    .sig{font-size:1.7rem;margin-top:.3em}
+    .replay{margin-top:.6em}
+  }
+  /* Chinese: Kai/Song glyphs read larger than the Latin script face */
+  .zh .card h1{font-size:clamp(1.75rem,7vw,2.6rem);letter-spacing:.04em}
+  .zh .msg{letter-spacing:.05em;text-align:justify;text-align-last:center}
+  .zh .sig{font-size:clamp(1.25rem,4.8vw,1.6rem);letter-spacing:.08em}
+  .zh .hint{letter-spacing:.12em}
+  .zh .tip{letter-spacing:.3em}
+  @media (prefers-reduced-motion:reduce){
+    .envelope,.envelope::before,.seal,.hint,.hint .shine{animation:none}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="sky" class="layer" aria-hidden="true"></canvas>
+<div class="ground" aria-hidden="true"></div>
+
+<main id="stage">
+  <!-- Intro: sealed envelope -->
+  <section id="intro" class="intro">
+    <button id="envelope" class="envelope" type="button" aria-expanded="false" aria-label="Open the Christmas surprise">
+      <span class="env-back"></span>
+      <span class="letter" aria-hidden="true">
+        <span class="l-top" id="letterTop">for you</span>
+        <span class="l-script">Merry Christmas</span>
+        <span class="l-star">✦</span>
+      </span>
+      <span class="env-front"></span>
+      <span class="env-flap"><i></i></span>
+      <span class="seal" aria-hidden="true">
+        <svg viewBox="0 0 100 100" fill="none" stroke-linecap="round">
+          <defs>
+            <g id="arm"><line x1="50" y1="50" x2="50" y2="16"/><line x1="50" y1="30" x2="40" y2="21"/><line x1="50" y1="30" x2="60" y2="21"/></g>
+            <g id="flake">
+              <use href="#arm"/><use href="#arm" transform="rotate(60 50 50)"/><use href="#arm" transform="rotate(120 50 50)"/>
+              <use href="#arm" transform="rotate(180 50 50)"/><use href="#arm" transform="rotate(240 50 50)"/><use href="#arm" transform="rotate(300 50 50)"/>
+              <circle cx="50" cy="50" r="5"/>
+            </g>
+          </defs>
+          <use href="#flake" stroke="rgba(55,0,0,.55)" stroke-width="5.5" transform="translate(1.2 1.6)"/>
+          <use href="#flake" stroke="rgba(255,196,176,.55)" stroke-width="4.5"/>
+        </svg>
+      </span>
+    </button>
+    <p class="hint"><span class="spark">✦</span> <span id="hintText">Tap to open</span> <span class="shine" id="hintShine">a Christmas surprise for you</span> <span class="spark">✦</span></p>
+  </section>
+
+  <!-- Scene: glowing particle tree + greeting card -->
+  <section id="scene" class="scene">
+    <div id="treeWrap" class="tree-wrap" aria-hidden="true"><canvas id="tree"></canvas></div>
+    <article id="card" class="card">
+      <p id="srText" class="sr-only"></p>
+      <h1 id="title"></h1>
+      <div id="divider" class="divider" aria-hidden="true"><span>✦</span></div>
+      <p id="message" class="msg"></p>
+      <p id="signature" class="sig"></p>
+      <button id="replay" class="replay" type="button">↺ Read again</button>
+    </article>
+  </section>
+</main>
+
+<canvas id="fx" class="layer" aria-hidden="true"></canvas>
+
+<button id="sound" class="sound" type="button" aria-label="Mute music" hidden>
+  <span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+</button>
+<p id="tip" class="tip" aria-hidden="true">✦ <span id="tipText">Tap anywhere for stardust</span> ✦</p>
+
+<script>
+(() => {
+'use strict';
+
+/* ============================================================
+   CONFIG — everything comes from the link, e.g.
+   ?to=Mom&from=Ran&msg=Your%20words&lang=zh
+     to    recipient name           (optional, max 24 chars)
+     from  signature                (optional, max 24 chars)
+     msg   the message; \n = new line (optional, max 300 chars)
+     lang  en | zh  — UI language   (optional; defaults to zh when msg is Chinese)
+   Make links with create.html.
+   ============================================================ */
+const params = new URLSearchParams(location.search);
+const clean = (v, n) => (v || '').replace(/\r\n?/g, '\n').trim().slice(0, n);
+const CJK = /[⺀-鿿豈-﫿　-〿＀-￯]/;
+
+const rawMsg = clean(params.get('msg'), 300);
+const lang = params.get('lang') === 'zh' || params.get('lang') === 'en'
+  ? params.get('lang')
+  : (CJK.test(rawMsg + (params.get('to') || '')) ? 'zh' : 'en');
+
+const T = {
+  en: {
+    message: 'Thank you for every moment of companionship this year. May your new year be as pure and beautiful as this falling snow.',
+    letterTop: to => to ? `for ${to}` : 'for you',
+    hint: touch => `${touch ? 'Tap' : 'Click'} to open`,
+    shine: to => `a Christmas surprise for ${to || 'you'}`,
+    title: to => to ? `To ${to}, Merry Christmas!` : 'Merry Christmas!',
+    sig: from => `From ${from}`,
+    replay: '↺ Read again',
+    tip: touch => `${touch ? 'Tap' : 'Click'} anywhere for stardust`,
+    docTitle: to => to ? `Merry Christmas, ${to}` : 'Merry Christmas ✦',
+    aria: to => `Open the Christmas surprise for ${to || 'you'}`
+  },
+  zh: {
+    message: '谢谢你这一年的每一次陪伴。愿你的新年，像这场雪一样干净又美好。',
+    letterTop: to => to ? `致 ${to}` : '给你的',
+    hint: touch => `${touch ? '轻点' : '点击'}信封，打开`,
+    shine: to => `${to ? to + '的' : '你的'}圣诞惊喜`,
+    title: to => to ? `${to}，圣诞快乐！` : '圣诞快乐！',
+    sig: from => `—— ${from}`,
+    replay: '↺ 再读一遍',
+    tip: touch => `${touch ? '轻点' : '点击'}任意处，撒点星光`,
+    docTitle: to => to ? `${to}，圣诞快乐` : '圣诞快乐 ✦',
+    aria: to => `打开给${to || '你'}的圣诞惊喜`
+  }
+}[lang];
+
+const CONFIG = {
+  to:      clean(params.get('to'), 24),
+  from:    clean(params.get('from'), 24),
+  message: rawMsg || T.message
+};
+
+const $ = s => document.querySelector(s);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isTouch = matchMedia('(hover: none)').matches;
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+const TAU = Math.PI * 2;
+const rand = (a = 1, b) => b === undefined ? Math.random() * a : a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const easeBack = t => { const c = 1.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+document.title = T.docTitle(CONFIG.to);
+$('#letterTop').textContent = T.letterTop(CONFIG.to);
+$('#hintText').textContent = T.hint(isTouch);
+$('#hintShine').textContent = T.shine(CONFIG.to);
+$('#tipText').textContent = T.tip(isTouch);
+$('#replay').textContent = T.replay;
+$('#envelope').setAttribute('aria-label', T.aria(CONFIG.to));
+if (lang === 'zh') document.body.classList.add('zh');
+
+/* ---------- glow sprites (pre-rendered for performance) ---------- */
+function makeSprite(size, stops) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d'), r = size / 2;
+  const grd = g.createRadialGradient(r, r, 0, r, r, r);
+  stops.forEach(([o, rgb, a]) => grd.addColorStop(o, `rgba(${rgb},${a})`));
+  g.fillStyle = grd; g.fillRect(0, 0, size, size);
+  return c;
+}
+const glow = rgb => makeSprite(64, [[0, '255,255,255', 1], [0.14, rgb, 1], [0.4, rgb, 0.32], [1, rgb, 0]]);
+const snowCrisp = makeSprite(32, [[0, '255,255,255', 1], [0.38, '250,252,255', .9], [0.6, '235,242,255', .3], [1, '235,242,255', 0]]);
+const snowSoft  = makeSprite(48, [[0, '255,255,255', .9], [0.3, '245,248,255', .55], [1, '235,242,255', 0]]);
+const starDot   = makeSprite(16, [[0, '255,255,255', 1], [0.35, '220,230,255', .6], [1, '220,230,255', 0]]);
+
+/* ============================================================
+   CANVAS LAYERS: sky (stars + far snow) and fx (near snow + sparks)
+   ============================================================ */
+const sky = $('#sky'), skyCtx = sky.getContext('2d');
+const fx = $('#fx'), fxCtx = fx.getContext('2d');
+let W = 0, H = 0;
+
+const flakes = [];
+const FRONT = 0.82;
+function newFlake(anywhere) {
+  const z = Math.pow(Math.random(), 1.7);           // depth: most flakes are far away
+  const front = z > FRONT;
+  return {
+    x: rand(W), y: anywhere ? rand(H) : -12 - rand(50), z,
+    r: 0.55 + z * 2.5 + (front ? rand(2.4) : 0),
+    vy: 0.2 + z * 1.25 + rand(0.15),
+    sw: (0.15 + rand(0.5)) * (0.4 + z),
+    sp: rand(0.4, 1.6), ph: rand(TAU),
+    a: 0.2 + z * 0.62
+  };
+}
+function initSnow() {
+  const target = Math.round(clamp(W * H / 6200, 90, 320) * (reduceMotion ? .35 : 1));
+  while (flakes.length < target) flakes.push(newFlake(true));
+  if (flakes.length > target) flakes.length = target;
+}
+
+const stars = Array.from({ length: 90 }, () => ({
+  x: Math.random(), y: Math.pow(Math.random(), 1.35) * 0.72,
+  r: rand(0.3, 1.35), ph: rand(TAU), sp: rand(0.5, 2)
+}));
+
+function resize() {
+  W = innerWidth; H = innerHeight;
+  for (const [cv, cx] of [[sky, skyCtx], [fx, fxCtx]]) {
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  initSnow();
+}
+addEventListener('resize', resize);
+resize();
+
+function drawStars(t) {
+  for (const s of stars) {
+    const a = 0.2 + 0.6 * (0.5 + 0.5 * Math.sin(t * 0.001 * s.sp + s.ph));
+    const d = s.r * 4;
+    skyCtx.globalAlpha = a;
+    skyCtx.drawImage(starDot, s.x * W - d / 2, s.y * H - d / 2, d, d);
+  }
+}
+
+function drawSnow(t, k) {
+  const wind = Math.sin(t * 0.00012) * 0.35 + Math.sin(t * 0.00037) * 0.15;
+  for (const f of flakes) {
+    f.y += f.vy * k;
+    f.x += (Math.sin(t * 0.001 * f.sp + f.ph) * f.sw + wind * (0.3 + f.z)) * k;
+    if (f.y > H + 14) Object.assign(f, newFlake(false));
+    if (f.x > W + 14) f.x = -14; else if (f.x < -14) f.x = W + 14;
+    const front = f.z > FRONT;
+    const ctx = front ? fxCtx : skyCtx;
+    const d = f.r * (front ? 4.2 : 3.2);
+    ctx.globalAlpha = front ? f.a * 0.75 : f.a;
+    ctx.drawImage(front ? snowSoft : snowCrisp, f.x - d / 2, f.y - d / 2, d, d);
+  }
+}
+
+/* ============================================================
+   GOLDEN STARDUST — bursts on every tap / click
+   ============================================================ */
+const GOLDS = ['255,214,120', '255,236,180', '255,190,92', '255,248,228'];
+const goldSprites = GOLDS.map(glow);
+const sparks = [], rings = [];
+
+function burst(x, y, n = 30, power = 1) {
+  for (let i = 0; i < n; i++) {
+    const a = rand(TAU), sp = (1.1 + rand(4.6)) * power;
+    sparks.push({
+      x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 0.7 * power,
+      age: 0, life: rand(700, 1600), size: rand(1.4, 4.8),
+      star: Math.random() < 0.45, rot: rand(TAU), vr: rand(-0.12, 0.12),
+      c: i % 4, tw: rand(TAU), g: rand(0.03, 0.07)
+    });
+  }
+  rings.push({ x, y, age: 0, life: 700, max: 46 * power + 34 });
+  if (sparks.length > 1000) sparks.splice(0, sparks.length - 1000);
+}
+function trail(x, y) {
+  sparks.push({
+    x: x + rand(-4, 4), y: y + rand(-4, 4), vx: rand(-.6, .6), vy: rand(-.8, .2),
+    age: 0, life: rand(450, 850), size: rand(1, 2.6), star: Math.random() < .35,
+    rot: rand(TAU), vr: rand(-.1, .1), c: (Math.random() * 4) | 0, tw: rand(TAU), g: 0.02
+  });
+}
+function star4(ctx, x, y, r, rot) {
+  const c = Math.cos(rot), s = Math.sin(rot);
+  ctx.setTransform(DPR * c, DPR * s, -DPR * s, DPR * c, DPR * x, DPR * y);
+  ctx.beginPath();
+  ctx.moveTo(0, -r);
+  ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.quadraticCurveTo(0, 0, 0, r);
+  ctx.quadraticCurveTo(0, 0, -r, 0);
+  ctx.quadraticCurveTo(0, 0, 0, -r);
+  ctx.fill();
+}
+function drawSparks(dt, k) {
+  const ctx = fxCtx;
+  ctx.globalCompositeOperation = 'lighter';
+  const drag = Math.pow(0.955, k);
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const p = sparks[i];
+    p.age += dt;
+    if (p.age >= p.life) { sparks.splice(i, 1); continue; }
+    p.vx *= drag; p.vy = p.vy * drag + p.g * k;
+    p.x += p.vx * k; p.y += p.vy * k; p.rot += p.vr * k;
+    const life = 1 - p.age / p.life;
+    const a = Math.pow(life, 1.25) * (0.7 + 0.3 * Math.sin(p.age * 0.03 + p.tw));
+    const d = p.size * 6;
+    ctx.globalAlpha = a * 0.9;
+    ctx.drawImage(goldSprites[p.c], p.x - d / 2, p.y - d / 2, d, d);
+    if (p.star) {
+      ctx.globalAlpha = a;
+      ctx.fillStyle = `rgb(${GOLDS[p.c]})`;
+      star4(ctx, p.x, p.y, p.size * 2.3, p.rot);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+  }
+  for (let i = rings.length - 1; i >= 0; i--) {
+    const r = rings[i];
+    r.age += dt;
+    const t = r.age / r.life;
+    if (t >= 1) { rings.splice(i, 1); continue; }
+    ctx.globalAlpha = (1 - t) * 0.55;
+    ctx.strokeStyle = 'rgb(255,222,160)';
+    ctx.lineWidth = 1.6 * (1 - t) + 0.2;
+    ctx.beginPath(); ctx.arc(r.x, r.y, r.max * easeOut(t), 0, TAU); ctx.stroke();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+}
+
+/* ============================================================
+   PARTICLE CHRISTMAS TREE
+   ============================================================ */
+const Tree = (() => {
+  const wrap = $('#treeWrap'), cv = $('#tree'), ctx = cv.getContext('2d');
+  const COLORS = {
+    gold: '255,204,110', warm: '255,238,205', amber: '255,166,70',
+    green: '150,226,176', rose: '255,118,128', ice: '170,214,255'
+  };
+  const SPR = {}; for (const k in COLORS) SPR[k] = glow(COLORS[k]);
+  let w = 0, h = 0, parts = [], G = null, running = false, t0 = 0;
+
+  const pick = table => { let r = Math.random(); for (const [k, p] of table) { if ((r -= p) <= 0) return k; } return table[0][0]; };
+
+  function build() {
+    parts = [];
+    const top = h * 0.15, bottom = h * 0.85, TH = bottom - top;
+    const R = Math.min(w * 0.4, TH * 0.42);
+    G = { cx: w / 2, top, bottom, TH, R };
+    const dens = clamp((w * h) / (380 * 430), 0.45, 1) * (reduceMotion ? .6 : 1);
+
+    // two golden garland spirals
+    const nS = Math.round(230 * dens);
+    for (let s = 0; s < 2; s++) for (let i = 0; i < nS; i++) {
+      const t = i / nS;
+      parts.push({ ang: t * TAU * 6.5 + s * Math.PI, r: R * t, y: top + t * TH,
+        size: rand(1.1, 2), col: s ? 'warm' : 'gold', tw: rand(TAU), ts: rand(1, 3),
+        at: (1 - t) * 1800 + rand(300) });
+    }
+    // body of the tree
+    const nF = Math.round(620 * dens);
+    for (let i = 0; i < nF; i++) {
+      const t = Math.pow(Math.random(), 0.7);
+      parts.push({ ang: rand(TAU), r: R * t * (0.5 + 0.5 * Math.sqrt(Math.random())), y: top + t * TH,
+        size: rand(0.7, 1.8), col: pick([['gold', .5], ['warm', .24], ['green', .16], ['amber', .1]]),
+        tw: rand(TAU), ts: rand(1, 3.5), at: (1 - t) * 1800 + rand(350) });
+    }
+    // ornaments
+    for (let i = 0; i < 40; i++) {
+      const t = rand(0.14, 1);
+      parts.push({ ang: rand(TAU), r: R * t * rand(0.9, 1), y: top + t * TH,
+        size: rand(2.1, 3.5), col: pick([['rose', .34], ['ice', .26], ['gold', .24], ['amber', .16]]),
+        tw: rand(TAU), ts: rand(1.5, 3), orn: true, at: 700 + (1 - t) * 1600 + rand(300) });
+    }
+    // trunk
+    for (let i = 0; i < 24; i++) {
+      parts.push({ fixed: true, x: rand(-R * .06, R * .06), y: bottom + rand(TH * .01, TH * .08),
+        size: rand(.7, 1.3), col: 'amber', tw: rand(TAU), ts: rand(1, 2), at: rand(300) });
+    }
+    // glowing halo ring on the ground
+    const nR = Math.round(120 * dens);
+    for (let i = 0; i < nR; i++) {
+      parts.push({ ring: true, ang: (i / nR) * TAU, r: R * 1.18 * rand(0.88, 1.08), y: bottom + TH * 0.075,
+        size: rand(0.7, 1.5), col: Math.random() < .6 ? 'gold' : 'warm', tw: rand(TAU), ts: rand(1, 3), at: rand(500) });
+    }
+  }
+
+  function size() {
+    const r = wrap.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    if (Math.abs(r.width - w) < 1 && Math.abs(r.height - h) < 1) return;
+    w = r.width; h = r.height;
+    cv.width = Math.round(w * DPR); cv.height = Math.round(h * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    build();
+  }
+  if ('ResizeObserver' in window) new ResizeObserver(size).observe(wrap);
+  else addEventListener('resize', size);
+
+  function drawTopStar(x, y, R, el, k) {
+    const pulse = 1 + 0.08 * Math.sin(el * 0.003);
+    const big = R * 1.1 * k * pulse;
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.85 * k;
+    ctx.drawImage(SPR.gold, x - big / 2, y - big / 2, big, big);
+    // slow rotating light rays
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(el * 0.00025);
+    for (let i = 0; i < 4; i++) {
+      ctx.rotate(Math.PI / 4);
+      const len = R * (i % 2 ? .38 : .62) * k * pulse;
+      const g = ctx.createLinearGradient(0, -len, 0, len);
+      g.addColorStop(0, 'rgba(255,220,150,0)'); g.addColorStop(.5, 'rgba(255,236,190,.55)'); g.addColorStop(1, 'rgba(255,220,150,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(-0.7, -len, 1.4, len * 2);
+    }
+    ctx.restore();
+    // the star itself
+    ctx.globalCompositeOperation = 'source-over';
+    const ro = Math.max(8, R * 0.1) * easeBack(k), ri = ro * 0.45;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.sin(el * 0.0008) * 0.08);
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? ri : ro;
+      ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+    }
+    ctx.closePath();
+    const sg = ctx.createRadialGradient(0, -ro * .2, 0, 0, 0, ro);
+    sg.addColorStop(0, '#fffdf2'); sg.addColorStop(.5, '#ffe29a'); sg.addColorStop(1, '#e9a845');
+    ctx.fillStyle = sg;
+    ctx.shadowColor = 'rgba(255,200,110,.95)'; ctx.shadowBlur = 18;
+    ctx.globalAlpha = clamp(k * 1.2, 0, 1);
+    ctx.fill();
+    ctx.restore();
+    ctx.shadowBlur = 0;
+  }
+
+  function frame(now) {
+    if (!running || !G) return;
+    const el = now - t0;
+    const { cx, top, bottom, TH, R } = G;
+    ctx.clearRect(0, 0, w, h);
+    ctx.globalCompositeOperation = 'lighter';
+
+    // warm base glow
+    const bg = easeOut(clamp(el / 1600, 0, 1));
+    ctx.globalAlpha = 0.45 * bg;
+    ctx.drawImage(SPR.amber, cx - R * 1.6, bottom + TH * .075 - R * .34, R * 3.2, R * .68);
+    ctx.globalAlpha = 0.14 * bg;
+    ctx.drawImage(SPR.gold, cx - R * 1.3, top + TH * .15, R * 2.6, TH * .9);
+
+    const rot = el * 0.00034;
+    for (const p of parts) {
+      const kk = clamp((el - p.at) / 700, 0, 1);
+      if (kk <= 0) continue;
+      const e = easeOut(kk);
+      let x, y, depth;
+      if (p.fixed) { x = cx + p.x; y = p.y; depth = .6; }
+      else {
+        const a = p.ang + (p.ring ? -rot * .6 : rot);
+        const sn = Math.sin(a);
+        x = cx + Math.cos(a) * p.r;
+        y = p.y + sn * p.r * (p.ring ? 0.2 : 0.09);
+        depth = (sn + 1) / 2;
+      }
+      y += (1 - e) * 14;
+      const tw = 0.62 + 0.38 * Math.sin(el * 0.002 * p.ts + p.tw);
+      const s = p.size * (0.72 + 0.56 * depth) * (p.orn ? 5.6 : 4.2);
+      ctx.globalAlpha = e * (0.2 + 0.8 * depth) * tw;
+      ctx.drawImage(SPR[p.col], x - s / 2, y - s / 2, s, s);
+    }
+
+    const sk = clamp((el - 2050) / 900, 0, 1);
+    if (sk > 0) drawTopStar(cx, top - TH * 0.035, R, el, sk);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  return {
+    start() { w = h = 0; size(); running = true; t0 = performance.now(); },
+    frame,
+    topStar() { // page coords of the star, for a celebratory burst
+      if (!G) return null;
+      const r = cv.getBoundingClientRect();
+      return { x: r.left + G.cx, y: r.top + G.top - G.TH * 0.035 };
+    }
+  };
+})();
+
+/* ============================================================
+   MUSIC BOX — "We Wish You a Merry Christmas", synthesised live
+   ============================================================ */
+const MusicBox = (() => {
+  let ctx = null, bus, master, timer = 0, until = 0, loop = 0, muted = false, started = false;
+  const BEAT = 0.47;     // seconds per beat (3/4 time)
+  const VOL = 0.7;
+
+  const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  function freq(n) {
+    const m = /^([A-G])(#|b)?(\d)$/.exec(n);
+    const midi = 12 * (+m[3] + 1) + SEMI[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0);
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+
+  // Melody in G major. Starts with the pick-up "We", loops seamlessly every 24 beats.
+  const MELODY = [
+    ['D5', 1],
+    ['G5', 1], ['G5', .5], ['A5', .5], ['G5', .5], ['F#5', .5],
+    ['E5', 1], ['E5', 1], ['E5', 1],
+    ['A5', 1], ['A5', .5], ['B5', .5], ['A5', .5], ['G5', .5],
+    ['F#5', 1], ['D5', 1], ['D5', 1],
+    ['B5', 1], ['B5', .5], ['C6', .5], ['B5', .5], ['A5', .5],
+    ['G5', 1], ['E5', 1], ['D5', .5], ['D5', .5],
+    ['E5', 1], ['A5', 1], ['F#5', 1],
+    ['G5', 2]
+  ];
+  const CHORDS = [
+    ['G3', 'B3', 'D4'], ['C4', 'E4', 'G4'], ['A3', 'C#4', 'E4'], ['D4', 'F#4', 'A4'],
+    ['B3', 'D#4', 'F#4'], ['C4', 'E4', 'G4'], ['D4', 'F#4', 'A4'], ['G3', 'B3', 'D4']
+  ];
+  // music-box tine: [frequency ratio, amplitude, decay multiplier]
+  const PARTIALS = [[1, 1, 1], [2, .3, .55], [3, .1, .3], [4.16, .055, .16]];
+
+  function impulse(sec = 2.8, decay = 3.2) {
+    const len = Math.floor(ctx.sampleRate * sec);
+    const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    return buf;
+  }
+
+  function init() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return false;
+    ctx = new AC();
+    master = ctx.createGain(); master.gain.value = 0.0001;
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 3;
+    comp.attack.value = 0.003; comp.release.value = 0.25;
+    bus = ctx.createGain(); bus.gain.value = 0.9;
+    const tone = ctx.createBiquadFilter(); tone.type = 'lowpass'; tone.frequency.value = 7200;
+    const rev = ctx.createConvolver(); rev.buffer = impulse();
+    const wet = ctx.createGain(); wet.gain.value = 0.4;
+    const dry = ctx.createGain(); dry.gain.value = 0.85;
+    bus.connect(tone); tone.connect(dry); tone.connect(rev); rev.connect(wet);
+    dry.connect(comp); wet.connect(comp); comp.connect(master); master.connect(ctx.destination);
+    return true;
+  }
+
+  function note(f, t, vel) {
+    const dur = clamp(2.4 * Math.pow(523 / f, 0.45), 1.1, 3.2);
+    for (const [ratio, amp, dm] of PARTIALS) {
+      const fr = f * ratio;
+      if (fr > ctx.sampleRate / 2.2) continue;
+      const o = ctx.createOscillator();
+      o.type = 'sine'; o.frequency.value = fr; o.detune.value = rand(-3, 3);
+      const g = ctx.createGain();
+      const end = t + dur * dm;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(vel * amp, t + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, end);
+      o.connect(g); g.connect(bus);
+      o.start(t); o.stop(end + 0.05);
+    }
+  }
+
+  function scheduleLoop(t0) {
+    let beat = 0;
+    for (const [n, d] of MELODY) {
+      const t = t0 + beat * BEAT + rand(-0.006, 0.006);
+      const f = freq(n);
+      note(f, t, 0.36);
+      if (loop % 2 === 1) note(f * 2, t + 0.004, 0.06);   // sparkly octave on every second pass
+      beat += d;
+    }
+    CHORDS.forEach((ch, i) => {
+      const bt = t0 + (1 + 3 * i) * BEAT;
+      note(freq(ch[0]), bt, 0.2);
+      for (let b = 1; b < 3; b++) {
+        if (i === 7 && b === 2) continue;
+        note(freq(ch[1]), bt + b * BEAT, 0.085);
+        note(freq(ch[2]), bt + b * BEAT + 0.012, 0.075);
+      }
+    });
+    until = t0 + 24 * BEAT;
+    loop++;
+  }
+
+  function chime(t) {
+    ['G5', 'B5', 'D6', 'G6', 'B6', 'D7'].forEach((n, i) => note(freq(n), t + i * 0.085, 0.17 - i * 0.015));
+  }
+
+  return {
+    start() {
+      if (started) return;
+      if (!init()) return;
+      started = true;
+      if (ctx.state !== 'running') ctx.resume();
+      const now = ctx.currentTime;
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.exponentialRampToValueAtTime(VOL, now + 0.9);
+      chime(now + 0.05);
+      scheduleLoop(now + 1.7);
+      timer = setInterval(() => {
+        if (ctx.state !== 'running') return;
+        if (ctx.currentTime > until - 1.6) scheduleLoop(Math.max(until, ctx.currentTime + 0.1));
+      }, 250);
+    },
+    sparkle() {
+      if (!started || muted || ctx.state !== 'running') return;
+      const n = ['D6', 'E6', 'G6', 'A6', 'B6', 'D7'][(Math.random() * 6) | 0];
+      note(freq(n), ctx.currentTime + 0.01, 0.07);
+    },
+    toggle() {
+      if (!started) return muted;
+      muted = !muted;
+      const now = ctx.currentTime;
+      master.gain.cancelScheduledValues(now);
+      if (muted) {
+        master.gain.setTargetAtTime(0.0001, now, 0.12);
+        setTimeout(() => { if (muted) ctx.suspend(); }, 600);
+      } else {
+        ctx.resume().then(() => {
+          const n = ctx.currentTime;
+          master.gain.cancelScheduledValues(n);
+          master.gain.setValueAtTime(Math.max(master.gain.value, 0.0001), n);
+          master.gain.setTargetAtTime(VOL, n, 0.25);
+        });
+      }
+      return muted;
+    },
+    visibility(hidden) {
+      if (!started) return;
+      if (hidden) ctx.suspend();
+      else if (!muted) ctx.resume();
+    }
+  };
+})();
+
+/* ============================================================
+   TYPEWRITER
+   ============================================================ */
+// Latin words stay unbroken (.word = nowrap); Chinese characters are left loose
+// so the line can wrap between any two of them. Newlines become <br>.
+function prepare(el, text) {
+  el.textContent = '';
+  el.setAttribute('aria-hidden', 'true');
+  const chars = [];
+  const ch = (parent, c) => {
+    const s = document.createElement('span'); s.className = 'ch'; s.textContent = c;
+    parent.appendChild(s); chars.push(s);
+  };
+  for (const tok of text.split(/(\s+)/)) {
+    if (!tok) continue;
+    if (/^\s+$/.test(tok)) {
+      const breaks = (tok.match(/\n/g) || []).length;
+      if (breaks) for (let i = 0; i < breaks; i++) el.appendChild(document.createElement('br'));
+      else ch(el, ' ');
+      continue;
+    }
+    let wd = null;
+    for (const c of tok) {
+      if (CJK.test(c)) { wd = null; ch(el, c); }
+      else {
+        if (!wd) { wd = document.createElement('span'); wd.className = 'word'; el.appendChild(wd); }
+        ch(wd, c);
+      }
+    }
+  }
+  return chars;
+}
+
+const titleEl = $('#title'), msgEl = $('#message'), sigEl = $('#signature');
+const divider = $('#divider'), replayBtn = $('#replay'), tip = $('#tip');
+const speedK = reduceMotion ? .45 : 1;
+const zhK = lang === 'zh' ? 2.2 : 1;     // one Chinese character ≈ a short word: type it slower
+const BLOCKS = [
+  { el: titleEl, text: T.title(CONFIG.to), speed: 88 * (lang === 'zh' ? 1.6 : 1) },
+  { el: msgEl,   text: CONFIG.message,     speed: 44 * zhK },
+  CONFIG.from ? { el: sigEl, text: T.sig(CONFIG.from), speed: 115 } : null
+].filter(Boolean);
+if (!CONFIG.from) sigEl.hidden = true;
+BLOCKS.forEach(b => { b.chars = prepare(b.el, b.text); });
+$('#srText').textContent = BLOCKS.map(b => b.text).join(' ');
+
+const caret = document.createElement('span');
+caret.className = 'caret'; caret.setAttribute('aria-hidden', 'true');
+let typeToken = 0;
+
+async function typeAll() {
+  const my = ++typeToken;
+  replayBtn.classList.remove('show');
+  divider.classList.remove('show');
+  caret.classList.remove('done');
+  BLOCKS.forEach(b => b.chars.forEach(c => c.classList.remove('on')));
+
+  for (let bi = 0; bi < BLOCKS.length; bi++) {
+    const b = BLOCKS[bi];
+    b.el.prepend(caret);
+    await sleep(bi === 0 ? 200 : 120);
+    for (const ch of b.chars) {
+      if (my !== typeToken) return;
+      ch.classList.add('on');
+      ch.after(caret);
+      const c = ch.textContent;
+      let d = b.speed * rand(0.6, 1.4);
+      if (',;，、；：'.includes(c)) d += 280;
+      else if ('.!?。！？…'.includes(c)) d += 520;
+      else if (c === ' ') d *= 0.6;
+      await sleep(d * speedK);
+    }
+    if (my !== typeToken) return;
+    if (bi === 0) { await sleep(320); divider.classList.add('show'); await sleep(700); }
+    else await sleep(520);
+  }
+  caret.classList.add('done');
+  const r = BLOCKS[BLOCKS.length - 1].el.getBoundingClientRect();
+  burst(r.right - 40, r.top + r.height / 2, 26, .8);
+  replayBtn.classList.add('show');
+  tip.classList.add('show');
+  setTimeout(() => tip.classList.remove('show'), 7500);
+}
+
+/* ============================================================
+   OPENING SEQUENCE
+   ============================================================ */
+const intro = $('#intro'), env = $('#envelope'), scene = $('#scene'), soundBtn = $('#sound');
+let opened = false;
+
+env.addEventListener('click', () => {
+  if (opened) return;
+  opened = true;
+  MusicBox.start();                         // must start inside the user gesture
+  env.classList.add('is-opening');
+  intro.classList.add('is-opened');
+  env.setAttribute('aria-expanded', 'true');
+
+  setTimeout(() => env.classList.add('flap-behind'), 900);
+  setTimeout(() => {
+    const r = env.getBoundingClientRect();
+    burst(r.left + r.width / 2, r.top + r.height * 0.2, reduceMotion ? 24 : 64, 1.7);
+  }, 1450);
+  setTimeout(() => intro.classList.add('is-leaving'), 2400);
+  setTimeout(() => {
+    scene.classList.add('is-visible');
+    Tree.start();
+    soundBtn.hidden = false;
+    requestAnimationFrame(() => soundBtn.classList.add('show'));
+  }, 2900);
+  setTimeout(() => { intro.hidden = true; }, 3500);
+  setTimeout(() => {
+    const s = Tree.topStar();
+    if (s) burst(s.x, s.y, 22, .7);
+  }, 2900 + 2400);
+  setTimeout(typeAll, 2900 + 2000);
+});
+
+replayBtn.addEventListener('click', () => { Tree.start(); setTimeout(typeAll, 900); });
+
+soundBtn.addEventListener('click', () => {
+  const m = MusicBox.toggle();
+  soundBtn.classList.toggle('muted', m);
+  soundBtn.setAttribute('aria-label', m ? 'Play music' : 'Mute music');
+});
+
+document.addEventListener('visibilitychange', () => MusicBox.visibility(document.hidden));
+
+/* ---------- stardust on every tap / click, trail on mouse move ---------- */
+addEventListener('pointerdown', e => {
+  burst(e.clientX, e.clientY, reduceMotion ? 14 : 32, 1);
+  if (!soundBtn.contains(e.target)) MusicBox.sparkle();
+}, { passive: true });
+
+let lastTrail = 0;
+addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse' || reduceMotion) return;
+  const now = performance.now();
+  if (now - lastTrail < 32) return;
+  lastTrail = now;
+  trail(e.clientX, e.clientY);
+}, { passive: true });
+
+/* ============================================================
+   MAIN LOOP
+   ============================================================ */
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(50, now - last); last = now;
+  const k = dt / 16.667;
+  skyCtx.clearRect(0, 0, W, H);
+  fxCtx.clearRect(0, 0, W, H);
+  drawStars(now);
+  drawSnow(now, k);
+  skyCtx.globalAlpha = 1; fxCtx.globalAlpha = 1;
+  drawSparks(dt, k);
+  Tree.frame(now);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>

@@ -252,16 +252,46 @@
   }
   .caret.done{animation:caretOut 1.6s ease forwards}
 
-  .replay{
-    appearance:none;-webkit-appearance:none;cursor:pointer;
-    display:block;margin:1.15em auto 0;padding:.7em 1.4em;
+  .actions{
+    display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:1.15em;
+    opacity:0;pointer-events:none;transition:opacity .9s ease;
+  }
+  .actions.show{opacity:1;pointer-events:auto}
+  .pill{
+    appearance:none;-webkit-appearance:none;cursor:pointer;text-decoration:none;
+    display:inline-block;padding:.7em 1.4em;
     font:500 .74rem/1 var(--serif);letter-spacing:.26em;text-transform:uppercase;
     color:rgba(243,201,122,.85);background:rgba(255,220,160,.04);
     border:1px solid rgba(243,201,122,.3);border-radius:999px;
-    opacity:0;pointer-events:none;transition:opacity .9s ease, background .3s, border-color .3s;
+    transition:background .3s, border-color .3s;
   }
-  .replay.show{opacity:1;pointer-events:auto}
-  .replay:hover{background:rgba(255,220,160,.1);border-color:rgba(243,201,122,.6)}
+  .pill:hover{background:rgba(255,220,160,.1);border-color:rgba(243,201,122,.6)}
+  .pill:disabled{opacity:.5;cursor:wait}
+
+  /* ---------- "save as image" viewer ---------- */
+  .shot{
+    position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    padding:max(18px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));
+    background:rgba(4,6,18,.86);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  }
+  .shot img{
+    display:block;max-width:min(86vw,420px);max-height:70vh;max-height:70svh;width:auto;height:auto;
+    border-radius:12px;border:1px solid rgba(243,201,122,.3);box-shadow:0 20px 60px rgba(0,0,0,.6);
+    -webkit-touch-callout:default;user-select:auto;-webkit-user-select:auto;
+  }
+  .shot p{margin:0;text-align:center;color:var(--gold-soft);font-size:1.02rem;letter-spacing:.06em}
+  .shot .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+
+  /* ---------- recording mode (?rec=1): clean frame for screen recording ---------- */
+  .rec .sound,.rec .tip,.rec .actions{display:none!important}
+  .rec-cover{
+    position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:24px;cursor:pointer;
+    background:rgba(4,6,18,.92);text-align:center;transition:opacity .7s ease;
+  }
+  .rec-cover.gone{opacity:0;pointer-events:none}
+  .rec-cover h2{margin:0 0 .5em;font-family:var(--script);font-weight:400;font-size:2.4rem;color:#f7d48e}
+  .rec-cover p{margin:0 auto;max-width:22em;font-size:1.08rem;line-height:1.75;color:var(--cream)}
+  .rec-cover small{display:block;margin-top:1.2em;font-size:.86rem;color:rgba(251,243,228,.6);line-height:1.6}
 
   /* ---------- floating UI ---------- */
   .sound{
@@ -334,7 +364,7 @@
     .divider{margin:.2em auto .5em}
     .msg{font-size:1.02rem;line-height:1.55}
     .sig{font-size:1.7rem;margin-top:.3em}
-    .replay{margin-top:.6em}
+    .actions{margin-top:.6em}
   }
   /* Chinese: Kai/Song glyphs read larger than the Latin script face */
   .zh .card h1{font-size:clamp(1.75rem,7vw,2.6rem);letter-spacing:.04em}
@@ -391,7 +421,10 @@
       <div id="divider" class="divider" aria-hidden="true"><span>✦</span></div>
       <p id="message" class="msg"></p>
       <p id="signature" class="sig"></p>
-      <button id="replay" class="replay" type="button">↺ Read again</button>
+      <div id="actions" class="actions">
+        <button id="replay" class="pill" type="button">↺ Read again</button>
+        <button id="save" class="pill" type="button">⤓ Save image</button>
+      </div>
     </article>
   </section>
 </main>
@@ -436,7 +469,13 @@ const T = {
     replay: '↺ Read again',
     tip: touch => touch ? 'Tap or swipe for stardust' : 'Click or move the mouse for stardust',
     docTitle: to => to ? `Merry Christmas, ${to}` : 'Merry Christmas ✦',
-    aria: to => `Open the Christmas surprise for ${to || 'you'}`
+    aria: to => `Open the Christmas surprise for ${to || 'you'}`,
+    save: '⤓ Save image', saving: 'Drawing…',
+    saveHint: touch => touch ? 'Press and hold the image to save it' : 'Your card as an image',
+    download: '⤓ Download', share: '↗ Share', close: '✕ Close',
+    recTitle: 'Recording mode',
+    recBody: touch => `Start your phone’s screen recording first, come back here, then ${touch ? 'tap' : 'click'} anywhere. The card opens by itself.`,
+    recSmall: 'Buttons and hints are hidden so the video stays clean. Trim the start when you’re done.'
   },
   zh: {
     message: '谢谢你这一年的每一次陪伴。愿你的新年，像这场雪一样干净又美好。',
@@ -448,7 +487,13 @@ const T = {
     replay: '↺ 再读一遍',
     tip: touch => touch ? '轻点或滑动，撒点星光' : '点击或移动鼠标，撒点星光',
     docTitle: to => to ? `${to}，圣诞快乐` : '圣诞快乐 ✦',
-    aria: to => `打开给${to || '你'}的圣诞惊喜`
+    aria: to => `打开给${to || '你'}的圣诞惊喜`,
+    save: '⤓ 保存图片', saving: '生成中…',
+    saveHint: touch => touch ? '长按图片，保存到相册' : '贺卡图片已生成',
+    download: '⤓ 下载', share: '↗ 分享', close: '✕ 关闭',
+    recTitle: '录屏模式',
+    recBody: touch => `先打开手机的屏幕录制，回到这里后${touch ? '轻点' : '点击'}任意处，贺卡会自己打开。`,
+    recSmall: '按钮和提示都已隐藏，画面更干净。录完后在相册里把开头剪掉就好。'
   }
 }[lang];
 
@@ -477,7 +522,10 @@ $('#hintShine').textContent = T.shine(CONFIG.to);
 $('#tipText').textContent = T.tip(isTouch);
 $('#replay').textContent = T.replay;
 $('#envelope').setAttribute('aria-label', T.aria(CONFIG.to));
+$('#save').textContent = T.save;
 if (lang === 'zh') document.body.classList.add('zh');
+const REC = params.get('rec') === '1';
+if (REC) document.body.classList.add('rec');
 
 /* ---------- glow sprites (pre-rendered for performance) ---------- */
 function makeSprite(size, stops) {
@@ -943,9 +991,14 @@ const MusicBox = (() => {
   }
 
   return {
+    // create + resume the audio context inside a user gesture; music can then start later
+    unlock() {
+      if (!ctx && !init()) return;
+      if (ctx.state !== 'running') ctx.resume();
+    },
     start() {
       if (started) return;
-      if (!init()) return;
+      if (!ctx && !init()) return;
       started = true;
       if (ctx.state !== 'running') ctx.resume();
       const now = ctx.currentTime;
@@ -1023,7 +1076,7 @@ function prepare(el, text) {
 }
 
 const titleEl = $('#title'), msgEl = $('#message'), sigEl = $('#signature');
-const divider = $('#divider'), replayBtn = $('#replay'), tip = $('#tip');
+const divider = $('#divider'), replayBtn = $('#replay'), tip = $('#tip'), actions = $('#actions');
 const speedK = reduceMotion ? .45 : 1;
 const zhK = lang === 'zh' ? 2.2 : 1;     // one Chinese character ≈ a short word: type it slower
 const BLOCKS = [
@@ -1041,7 +1094,7 @@ let typeToken = 0;
 
 async function typeAll() {
   const my = ++typeToken;
-  replayBtn.classList.remove('show');
+  actions.classList.remove('show');
   divider.classList.remove('show');
   caret.classList.remove('done');
   BLOCKS.forEach(b => b.chars.forEach(c => c.classList.remove('on')));
@@ -1068,7 +1121,13 @@ async function typeAll() {
   caret.classList.add('done');
   const r = BLOCKS[BLOCKS.length - 1].el.getBoundingClientRect();
   burst(r.right - 40, r.top + r.height / 2, 26, .8);
-  replayBtn.classList.add('show');
+  if (REC) {                       // closing shot for the video: one last sparkle from the star
+    await sleep(1600);
+    const s = Tree.topStar();
+    if (s && my === typeToken) burst(s.x, s.y, 40, 1.1);
+    return;
+  }
+  actions.classList.add('show');
   tip.classList.add('show');
   setTimeout(() => tip.classList.remove('show'), 7500);
 }
@@ -1079,10 +1138,10 @@ async function typeAll() {
 const intro = $('#intro'), env = $('#envelope'), scene = $('#scene'), soundBtn = $('#sound');
 let opened = false;
 
-env.addEventListener('click', () => {
+function openCard() {
   if (opened) return;
   opened = true;
-  MusicBox.start();                         // must start inside the user gesture
+  MusicBox.start();                         // inside the user gesture, or after MusicBox.unlock()
   env.classList.add('is-opening');
   intro.classList.add('is-opened');
   env.setAttribute('aria-expanded', 'true');
@@ -1105,9 +1164,223 @@ env.addEventListener('click', () => {
     if (s) burst(s.x, s.y, 22, .7);
   }, 2900 + 2400);
   setTimeout(typeAll, 2900 + 2000);
-});
+}
+env.addEventListener('click', openCard);
 
 replayBtn.addEventListener('click', () => { Tree.start(); setTimeout(typeAll, 900); });
+
+/* ---------- recording mode: a cover asks for one tap (unlocks audio), then the card plays itself ---------- */
+if (REC) {
+  const cover = document.createElement('div');
+  cover.className = 'rec-cover';
+  const box = document.createElement('div');
+  const h = document.createElement('h2'); h.textContent = T.recTitle;
+  const p = document.createElement('p'); p.textContent = T.recBody(isTouch);
+  const sm = document.createElement('small'); sm.textContent = T.recSmall;
+  box.append(h, p, sm); cover.appendChild(box);
+  document.body.appendChild(cover);
+  cover.addEventListener('click', () => {    // click (not pointerdown): iOS only unlocks audio on touchend/click
+    if (cover.classList.contains('gone')) return;
+    MusicBox.unlock();
+    cover.classList.add('gone');
+    setTimeout(() => cover.remove(), 800);
+    setTimeout(openCard, 2200);             // ~2s of the sealed envelope as the opening shot
+  });
+}
+
+/* ============================================================
+   SAVE AS IMAGE — redraws the finished card as a 1080×1920 (9:16) JPEG
+   ============================================================ */
+const CardImage = (() => {
+  const CW = 1080, CH = 1920;
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const PUNCT_CLOSE = /^[，。、！？；：）》」』”’…,.!?;:)]$/;
+  const UNIT = new RegExp(`${CJK.source}|[^\\s${CJK.source.slice(1, -1)}]+|\\s+`, 'g');
+
+  function wrap(g, text, maxW) {
+    const lines = [];
+    for (const para of text.split('\n')) {
+      const units = para.match(UNIT) || [''];
+      let line = '';
+      for (const u of units) {
+        const test = line + u;
+        if (line.trim() && !PUNCT_CLOSE.test(u) && g.measureText(test.trimEnd()).width > maxW) {
+          lines.push(line.trimEnd());
+          line = u.trimStart();
+        } else line = test;
+      }
+      lines.push(line.trimEnd());
+    }
+    return lines;
+  }
+
+  function glowBlob(g, x, y, rx, ry, color, stop = .62) {
+    g.save();
+    g.translate(x, y); g.scale(1, ry / rx);
+    const r = g.createRadialGradient(0, 0, 0, 0, 0, rx);
+    r.addColorStop(0, color); r.addColorStop(stop, 'rgba(0,0,0,0)');
+    g.fillStyle = r; g.fillRect(-rx, -rx, rx * 2, rx * 2);
+    g.restore();
+  }
+
+  function roundRect(g, x, y, w, h, r) {
+    g.beginPath();
+    g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+  }
+
+  async function render() {
+    if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
+    const SCRIPT = css('--script'), SERIF = css('--serif');
+    const zh = lang === 'zh';
+    const c = document.createElement('canvas'); c.width = CW; c.height = CH;
+    const g = c.getContext('2d');
+
+    // night sky
+    const bg = g.createLinearGradient(0, 0, 0, CH);
+    bg.addColorStop(0, '#050816'); bg.addColorStop(.46, '#0a1330'); bg.addColorStop(.78, '#171531'); bg.addColorStop(1, '#221a2c');
+    g.fillStyle = bg; g.fillRect(0, 0, CW, CH);
+    glowBlob(g, CW / 2, CH * 1.08, 1200, 760, 'rgba(255,166,84,.30)');
+    glowBlob(g, CW * .85, -120, 760, 520, 'rgba(110,132,255,.16)');
+    glowBlob(g, CW * .08, 230, 640, 450, 'rgba(160,110,255,.10)');
+    for (let i = 0; i < 150; i++) {
+      const d = rand(2, 7);
+      g.globalAlpha = rand(.25, .85);
+      g.drawImage(starDot, rand(CW) - d / 2, Math.pow(Math.random(), 1.35) * CH * .7 - d / 2, d, d);
+    }
+    for (let i = 0; i < 170; i++) {
+      const z = Math.pow(Math.random(), 1.7), d = (1.4 + z * 6) * 3.2 * (z > .85 ? 1.6 : 1);
+      g.globalAlpha = .2 + z * .6;
+      g.drawImage(z > .85 ? snowSoft : snowCrisp, rand(CW) - d / 2, rand(CH) - d / 2, d, d);
+    }
+    g.globalAlpha = 1;
+
+    // ---- measure the card ----
+    const cardW = 920, padX = 84, innerW = cardW - padX * 2;
+    let tSize = zh ? 84 : 100, tLines;
+    for (; tSize >= 56; tSize -= 4) {          // long names: shrink the title to fit in two lines
+      g.font = `400 ${tSize}px ${SCRIPT}`;
+      tLines = wrap(g, T.title(CONFIG.to), innerW);
+      if (tLines.length <= 2) break;
+    }
+    const tLH = tSize * 1.25;
+    let mSize = 48, mLH, mLines;
+    for (; mSize >= 32; mSize -= 2) {          // shrink long messages so tree + card still fit
+      g.font = `500 ${mSize}px ${SERIF}`;
+      mLines = wrap(g, CONFIG.message, innerW);
+      mLH = mSize * (zh ? 1.8 : 1.7);
+      if (mLines.length * mLH <= 860) break;
+    }
+    const sSize = zh ? 54 : 78;
+    const sigH = CONFIG.from ? 36 + sSize * 1.3 : 0;
+    const cardH = 96 + tLines.length * tLH + 96 + mLines.length * mLH + sigH + 84;
+    const cardX = (CW - cardW) / 2, cardY = CH - 130 - cardH;
+
+    // ---- particle tree, copied from the live canvas ----
+    const tc = $('#tree');
+    const treeTop = 110, treeH = Math.max(320, cardY - treeTop - 50);
+    if (tc.width && tc.height) {
+      const k = Math.min(960 / tc.width, treeH / tc.height, 1.6);   // cap upscaling to stay sharp
+      const w = tc.width * k, h = tc.height * k;
+      g.globalCompositeOperation = 'lighter';
+      g.drawImage(tc, (CW - w) / 2, treeTop + (treeH - h) / 2, w, h);
+      g.globalCompositeOperation = 'source-over';
+    }
+
+    // ---- card ----
+    g.save();
+    g.shadowColor = 'rgba(0,0,0,.55)'; g.shadowBlur = 70; g.shadowOffsetY = 26;
+    roundRect(g, cardX, cardY, cardW, cardH, 40);
+    g.fillStyle = 'rgba(16,18,44,.72)'; g.fill();
+    g.restore();
+    const sheen = g.createLinearGradient(0, cardY, 0, cardY + cardH);
+    sheen.addColorStop(0, 'rgba(255,246,230,.10)'); sheen.addColorStop(1, 'rgba(255,246,230,.03)');
+    roundRect(g, cardX, cardY, cardW, cardH, 40); g.fillStyle = sheen; g.fill();
+    g.lineWidth = 2; g.strokeStyle = 'rgba(243,201,122,.34)'; g.stroke();
+    roundRect(g, cardX + 16, cardY + 16, cardW - 32, cardH - 32, 28);
+    g.lineWidth = 1.5; g.strokeStyle = 'rgba(243,201,122,.15)'; g.stroke();
+    // little star on the top edge
+    g.fillStyle = '#141633'; g.beginPath(); g.arc(CW / 2, cardY, 30, 0, TAU); g.fill();
+    g.fillStyle = '#f3c97a'; g.shadowColor = 'rgba(255,200,120,.9)'; g.shadowBlur = 20;
+    star4(g, CW / 2 / DPR, cardY / DPR, 17 / DPR, 0);   // star4 applies DPR; cancel it out
+    g.setTransform(1, 0, 0, 1, 0, 0); g.shadowBlur = 0;
+
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    let y = cardY + 96 + tLH / 2 - 8;
+    g.font = `400 ${tSize}px ${SCRIPT}`;
+    g.fillStyle = '#f7d48e'; g.shadowColor = 'rgba(255,190,100,.55)'; g.shadowBlur = 26;
+    for (const line of tLines) { g.fillText(line, CW / 2, y); y += tLH; }
+    g.shadowBlur = 0;
+
+    // divider
+    y += 4;
+    const dw = innerW * .36;
+    for (const dir of [-1, 1]) {
+      const x0 = CW / 2 + dir * 30, x1 = CW / 2 + dir * (30 + dw);
+      const lg = g.createLinearGradient(x0, 0, x1, 0);
+      lg.addColorStop(0, 'rgba(243,201,122,.8)'); lg.addColorStop(1, 'rgba(243,201,122,0)');
+      g.fillStyle = lg; g.fillRect(Math.min(x0, x1), y - 1, dw, 2);
+    }
+    g.font = `400 26px ${SERIF}`; g.fillStyle = '#f3c97a'; g.fillText('✦', CW / 2, y);
+    y += 96 - tLH / 2 + mLH / 2 - 10;
+
+    // message
+    g.font = `500 ${mSize}px ${SERIF}`; g.fillStyle = '#f7eedd';
+    for (const line of mLines) { g.fillText(line, CW / 2, y); y += mLH; }
+
+    // signature
+    if (CONFIG.from) {
+      y += 36 + sSize * .65 - mLH / 2;
+      g.textAlign = 'right';
+      g.font = `400 ${sSize}px ${zh ? SERIF : SCRIPT}`;
+      g.fillStyle = '#f3c97a'; g.shadowColor = 'rgba(255,190,100,.45)'; g.shadowBlur = 18;
+      g.fillText(T.sig(CONFIG.from), cardX + cardW - padX, y);
+      g.shadowBlur = 0;
+    }
+    return c;
+  }
+
+  let viewer = null;
+  function show(dataUrl, blob) {
+    viewer?.remove();
+    viewer = document.createElement('div');
+    viewer.className = 'shot';
+    viewer.setAttribute('role', 'dialog');
+    const img = new Image(); img.src = dataUrl; img.alt = T.docTitle(CONFIG.to);
+    const p = document.createElement('p'); p.textContent = T.saveHint(isTouch);
+    const btns = document.createElement('div'); btns.className = 'btns';
+    const name = `christmas-card${CONFIG.to ? '-' + CONFIG.to : ''}.jpg`;
+    if (!isTouch) {
+      const a = document.createElement('a'); a.className = 'pill'; a.href = dataUrl; a.download = name; a.textContent = T.download;
+      btns.appendChild(a);
+    }
+    const file = blob && typeof File === 'function' ? new File([blob], name, { type: 'image/jpeg' }) : null;
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      const s = document.createElement('button'); s.type = 'button'; s.className = 'pill'; s.textContent = T.share;
+      s.addEventListener('click', () => navigator.share({ files: [file] }).catch(() => {}));
+      btns.appendChild(s);
+    }
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'pill'; x.textContent = T.close;
+    x.addEventListener('click', () => { viewer.remove(); viewer = null; });
+    btns.appendChild(x);
+    viewer.append(img, p, btns);
+    document.body.appendChild(viewer);
+  }
+
+  return {
+    render,
+    async save(btn) {
+      btn.disabled = true; btn.textContent = T.saving;
+      try {
+        const c = await render();
+        const dataUrl = c.toDataURL('image/jpeg', .92);
+        const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .92));
+        show(dataUrl, blob);
+      } finally { btn.disabled = false; btn.textContent = T.save; }
+    }
+  };
+})();
+$('#save').addEventListener('click', e => CardImage.save(e.currentTarget));
 
 soundBtn.addEventListener('click', () => {
   const m = MusicBox.toggle();
@@ -1119,6 +1392,7 @@ document.addEventListener('visibilitychange', () => MusicBox.visibility(document
 
 /* ---------- stardust on every tap / click, comet trail on mouse move / finger slide ---------- */
 addEventListener('pointerdown', e => {
+  if (e.target.closest && e.target.closest('.rec-cover, .shot')) return;
   burst(e.clientX, e.clientY, reduceMotion ? 14 : 32, 1);
   if (!soundBtn.contains(e.target)) MusicBox.sparkle();
   Trail.reset();

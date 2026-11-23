@@ -81,6 +81,7 @@
   .btn.wa:hover{background:rgba(37,211,102,.2)}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
   .row .btn{width:100%}
+  .btn.wide{width:100%;margin-top:10px}
 
   #result[hidden]{display:none}
   .link{
@@ -151,6 +152,7 @@
       <a class="btn wa" id="wa" target="_blank" rel="noopener" data-i18n="wa">💬 WhatsApp</a>
       <button class="btn" id="share" type="button" data-i18n="share">📤 更多分享</button>
     </div>
+    <a class="btn wide" id="rec" target="_blank" rel="noopener" data-i18n="rec">🎬 录屏版（做视频用）</a>
     <p class="note" data-i18n="note">微信：复制链接后粘贴到聊天里。Instagram：在私信里粘贴链接。<br>祝福语就写在链接里，拿到链接的人都能看到。</p>
   </section>
 
@@ -181,7 +183,8 @@ const UI = {
     langLabel: '贺卡语言', toLabel: '送给谁', msgLabel: '祝福语', fromLabel: '署名',
     msgHint: '留空会用默认祝福；可以换行', make: '✦ 生成贺卡链接', ready: '贺卡已就绪',
     preview: '👀 预览', copy: '🔗 复制链接', wa: '💬 WhatsApp', share: '📤 更多分享',
-    note: '微信：复制链接后粘贴到聊天里。Instagram：在私信里粘贴链接。<br>祝福语就写在链接里，拿到链接的人都能看到。',
+    rec: '🎬 录屏版（做视频用）',
+    note: '微信：复制链接后粘贴到聊天里。Instagram：在私信里粘贴链接。<br>想发视频：打开「录屏版」，用手机录屏（记得关掉静音模式）。想发图片：贺卡打开后点「保存图片」。<br>祝福语就写在链接里，拿到链接的人都能看到。',
     made: '已生成的贺卡', clear: '清空', empty: '还没有。生成的链接会保存在这台设备上，方便一个个发出去。',
     copied: '链接已复制 ✦', copyFail: '复制失败，请长按上面的链接手动复制', noShare: '这个浏览器不支持系统分享，请复制链接',
     placeholder: '默认：谢谢你这一年的每一次陪伴。愿你的新年，像这场雪一样干净又美好。',
@@ -200,7 +203,8 @@ const UI = {
     langLabel: 'Card language', toLabel: 'To', msgLabel: 'Message', fromLabel: 'From',
     msgHint: 'Leave empty for the default message; line breaks are kept', make: '✦ Create card link', ready: 'Your card is ready',
     preview: '👀 Preview', copy: '🔗 Copy link', wa: '💬 WhatsApp', share: '📤 Share…',
-    note: 'WeChat: copy the link and paste it in the chat. Instagram: paste the link in a DM.<br>The message lives in the link, so anyone with the link can read it.',
+    rec: '🎬 Recording version (for video)',
+    note: 'WeChat: copy the link and paste it in the chat. Instagram: paste the link in a DM.<br>For a video: open the recording version and screen-record it (turn silent mode off). For a picture: open the card and tap “Save image”.<br>The message lives in the link, so anyone with the link can read it.',
     made: 'Cards you made', clear: 'Clear', empty: 'None yet. Links you make are kept on this device so you can send them one by one.',
     copied: 'Link copied ✦', copyFail: 'Copy failed — long-press the link above to copy it', noShare: 'Sharing isn’t supported here — copy the link instead',
     placeholder: 'Default: Thank you for every moment of companionship this year. May your new year be as pure and beautiful as this falling snow.',
@@ -284,6 +288,8 @@ function show(card) {
   $('#result').hidden = false;
   $('#link').textContent = card.url;
   $('#preview').href = card.url;
+  const rec = new URL(card.url); rec.searchParams.set('rec', '1');
+  $('#rec').href = rec.toString();
   $('#wa').href = 'https://wa.me/?text=' + encodeURIComponent(UI[lang].shareText(card.to, card.url));
   $('#result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }

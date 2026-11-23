@@ -5,12 +5,17 @@
    loads themes/<id>.js (which registers window.CardThemes[id]) and then this
    file. Everything is driven by the link:
 
-     ?to=Mom&from=Ran&msg=Your%20words&lang=zh&rec=1
-       to    recipient name             (optional, max 24 chars)
-       from  signature                  (optional, max 24 chars)
-       msg   the message; \n = new line (optional, max 300 chars)
-       lang  en | zh  (optional; defaults to zh when msg/to contain Chinese)
-       rec   1 = recording mode: no buttons, opens by itself after one tap
+     ?t=Mom&f=KZ&m=2&l=zh            (short form, made by cards/index.html)
+     ?to=Mom&from=KZ&msg=Hi&lang=zh  (long form, still accepted)
+       t | to     recipient name             (optional, max 24 chars)
+       f | from   signature                  (optional, max 24 chars)
+       s | msg    the message; \n = new line (optional, max 300 chars)
+       m          number of a preset message of this theme (1-based) instead of s
+       l | lang   en | zh  (optional; defaults to zh when the text contains Chinese)
+       rec        1 = recording mode: no buttons, opens by itself after one tap
+     A text value starting with "." is base64url-encoded UTF-8: the maker uses
+     it when that is shorter than %-escaping (Chinese: ~4 chars per character
+     instead of 9).
    ========================================================================== */
 (() => {
 'use strict';
@@ -22,10 +27,19 @@ if (!TH) { document.body.textContent = 'Unknown card theme.'; return; }
 const params = new URLSearchParams(location.search);
 const clean = (v, n) => (v || '').replace(/\r\n?/g, '\n').trim().slice(0, n);
 const CJK = /[⺀-鿿豈-﫿　-〿＀-￯]/;
-const rawMsg = clean(params.get('msg'), 300);
-const lang = params.get('lang') === 'zh' || params.get('lang') === 'en'
-  ? params.get('lang')
-  : (CJK.test(rawMsg + (params.get('to') || '')) ? 'zh' : 'en');
+function unpack(v) {                               // ".<base64url>" → text; anything else as is
+  if (!v || v[0] !== '.') return v || '';
+  try {
+    const b = v.slice(1).replace(/-/g, '+').replace(/_/g, '/');
+    const bin = atob(b + '='.repeat((4 - b.length % 4) % 4));
+    return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+  } catch (e) { return v; }
+}
+const arg = (...names) => { for (const n of names) { const v = params.get(n); if (v != null) return unpack(v); } return ''; };
+const rawTo = arg('t', 'to'), rawFrom = arg('f', 'from');
+const rawMsg = clean(arg('s', 'msg'), 300);
+const langArg = params.get('l') || params.get('lang');
+const lang = langArg === 'zh' || langArg === 'en' ? langArg : (CJK.test(rawMsg + rawTo) ? 'zh' : 'en');
 const REC = params.get('rec') === '1';
 const PREVIEW = params.get('preview') === '1';     // embedded in the maker: no envelope, no music, live text
 const pick = o => (o && typeof o === 'object' && (lang in o)) ? o[lang] : o;
@@ -67,10 +81,12 @@ const UI = {
   }
 }[lang];
 
+const presetNo = parseInt(params.get('m'), 10);
+const preset = TH.presets && TH.presets[lang] && TH.presets[lang][presetNo - 1];
 const CONFIG = {
-  to: clean(params.get('to'), 24),
-  from: clean(params.get('from'), 24),
-  message: rawMsg || pick(TH.message)
+  to: clean(rawTo, 24),
+  from: clean(rawFrom, 24),
+  message: rawMsg || (preset ? preset[1] : '') || pick(TH.message)
 };
 
 /* ---------------------------------------------------------------- helpers */

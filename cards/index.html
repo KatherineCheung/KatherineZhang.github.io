@@ -341,11 +341,8 @@ function refreshPreview() {
   if (key !== pvKey) {                 // occasion or language changed: load that card
     pvKey = key;
     const u = new URL(`./${theme}/`, location.href);
-    const p = new URLSearchParams({ lang, preview: '1' });
-    const to = toEl.value.trim(), from = fromEl.value.trim(), msg = msgParam();
-    if (to) p.set('to', to);
-    if (from) p.set('from', from);
-    if (msg) p.set('msg', msg);
+    const p = cardParams();
+    p.set('preview', '1');
     u.search = p.toString();
     pv.src = u.toString();
   } else {                             // only the words changed: update the text in place
@@ -368,22 +365,36 @@ function markChips() {
 // default + preset texts of every occasion and language: switching occasion swaps these, keeps anything custom
 const STOCK = new Set(Object.values(THEMES).flatMap(th => ['zh', 'en'].flatMap(l => [th.message[l], ...th.presets[l].map(p => p[1])])));
 const isStock = v => !v.trim() || STOCK.has(v.trim());
-// the default message isn't put in the link: the card shows it anyway, and the link stays short
-const msgParam = () => { const m = msgEl.value.trim(); return m && m !== THEMES[theme].message[lang] ? m : ''; };
+/* Short links (read by engine.js):
+   - the default message is left out (the card shows it anyway)
+   - a preset message becomes its number: m=3 (presets are only ever appended, never reordered)
+   - any other text uses the shorter of %-escaping and "." + base64url of its UTF-8 bytes
+     (a Chinese character is 9 characters %-escaped, about 4 in base64url) */
+function pack(v) {
+  const plain = new URLSearchParams({ x: v }).toString().length - 2;
+  const b64 = '.' + btoa(String.fromCharCode(...new TextEncoder().encode(v))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return v[0] === '.' || b64.length < plain ? b64 : v;
+}
+function cardParams() {
+  const th = THEMES[theme], p = new URLSearchParams();
+  const to = toEl.value.trim(), from = fromEl.value.trim(), msg = msgEl.value.trim();
+  if (to) p.set('t', pack(to));
+  if (from) p.set('f', pack(from));
+  if (msg && msg !== th.message[lang]) {
+    const i = th.presets[lang].findIndex(x => x[1] === msg);
+    if (i >= 0) p.set('m', String(i + 1)); else p.set('s', pack(msg));
+  }
+  p.set('l', lang);
+  return p;
+}
 document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
   lang = b.dataset.lang; store.set('cards.lang', lang); apply();
 }));
 
 function buildUrl() {
   const u = new URL(`./${theme}/`, location.href);
-  const p = new URLSearchParams();
-  const to = toEl.value.trim(), msg = msgParam(), from = fromEl.value.trim();
-  if (to) p.set('to', to);
-  if (from) p.set('from', from);
-  if (msg) p.set('msg', msg);
-  p.set('lang', lang);
-  u.search = p.toString();
-  return { to, url: u.toString(), theme, lang };
+  u.search = cardParams().toString();
+  return { to: toEl.value.trim(), url: u.toString(), theme, lang };
 }
 
 let toastTimer = 0;

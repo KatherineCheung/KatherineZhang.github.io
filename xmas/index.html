@@ -434,7 +434,7 @@ const T = {
     title: to => to ? `To ${to}, Merry Christmas!` : 'Merry Christmas!',
     sig: from => `From ${from}`,
     replay: '↺ Read again',
-    tip: touch => `${touch ? 'Tap' : 'Click'} anywhere for stardust`,
+    tip: touch => touch ? 'Tap or swipe for stardust' : 'Click or move the mouse for stardust',
     docTitle: to => to ? `Merry Christmas, ${to}` : 'Merry Christmas ✦',
     aria: to => `Open the Christmas surprise for ${to || 'you'}`
   },
@@ -446,7 +446,7 @@ const T = {
     title: to => to ? `${to}，圣诞快乐！` : '圣诞快乐！',
     sig: from => `—— ${from}`,
     replay: '↺ 再读一遍',
-    tip: touch => `${touch ? '轻点' : '点击'}任意处，撒点星光`,
+    tip: touch => touch ? '轻点或滑动，撒点星光' : '点击或移动鼠标，撒点星光',
     docTitle: to => to ? `${to}，圣诞快乐` : '圣诞快乐 ✦',
     aria: to => `打开给${to || '你'}的圣诞惊喜`
   }
@@ -581,13 +581,53 @@ function burst(x, y, n = 30, power = 1) {
   rings.push({ x, y, age: 0, life: 700, max: 46 * power + 34 });
   if (sparks.length > 1000) sparks.splice(0, sparks.length - 1000);
 }
-function trail(x, y) {
-  sparks.push({
-    x: x + rand(-4, 4), y: y + rand(-4, 4), vx: rand(-.6, .6), vy: rand(-.8, .2),
-    age: 0, life: rand(450, 850), size: rand(1, 2.6), star: Math.random() < .35,
-    rot: rand(TAU), vr: rand(-.1, .1), c: (Math.random() * 4) | 0, tw: rand(TAU), g: 0.02
-  });
-}
+/* ---------- comet trail: follows the mouse / a finger sliding on the screen ----------
+   Sparks are laid along the path between pointer samples (no gaps on fast swipes),
+   drift back against the direction of travel, and every ~150px of travel pops a
+   small burst with a soft music-box note. */
+const Trail = (() => {
+  let lx = 0, ly = 0, lt = 0, active = false, travelled = 0, lastNote = 0;
+  const STEP = reduceMotion ? 18 : 7;          // px between emitted sparks
+  const POP_EVERY = 150;                       // px of travel per mini burst
+
+  function spark(x, y, dx, dy, speed) {
+    const back = 0.12 + Math.min(speed, 3) * 0.08;
+    sparks.push({
+      x: x + rand(-3, 3), y: y + rand(-3, 3),
+      vx: -dx * back + rand(-.55, .55), vy: -dy * back + rand(-.75, .25),
+      age: 0, life: rand(500, 1000), size: rand(1, 2.4) + Math.min(speed, 2) * .5,
+      star: Math.random() < .3, rot: rand(TAU), vr: rand(-.12, .12),
+      c: (Math.random() * 4) | 0, tw: rand(TAU), g: 0.018
+    });
+  }
+
+  return {
+    reset() { active = false; },
+    move(x, y) {
+      const now = performance.now();
+      if (!active || now - lt > 180) {      // new stroke: don't draw a line from the old spot
+        active = true; lx = x; ly = y; lt = now; travelled = 0;
+        return;
+      }
+      const dx = x - lx, dy = y - ly, dist = Math.hypot(dx, dy);
+      if (dist < 2) return;
+      const dt = Math.max(1, now - lt);
+      const speed = dist / dt;               // px per ms
+      const ux = dx / dist, uy = dy / dist;
+      const n = Math.min(Math.ceil(dist / STEP), 14);
+      for (let i = 1; i <= n; i++) spark(lx + dx * i / n, ly + dy * i / n, ux, uy, speed);
+
+      travelled += dist;
+      if (travelled > POP_EVERY) {
+        travelled = 0;
+        burst(x, y, reduceMotion ? 5 : 10, .45);
+        if (now - lastNote > 160) { lastNote = now; MusicBox.sparkle(.035); }
+      }
+      if (sparks.length > 1000) sparks.splice(0, sparks.length - 1000);
+      lx = x; ly = y; lt = now;
+    }
+  };
+})();
 function star4(ctx, x, y, r, rot) {
   const c = Math.cos(rot), s = Math.sin(rot);
   ctx.setTransform(DPR * c, DPR * s, -DPR * s, DPR * c, DPR * x, DPR * y);
@@ -918,10 +958,10 @@ const MusicBox = (() => {
         if (ctx.currentTime > until - 1.6) scheduleLoop(Math.max(until, ctx.currentTime + 0.1));
       }, 250);
     },
-    sparkle() {
+    sparkle(vel = 0.07) {
       if (!started || muted || ctx.state !== 'running') return;
       const n = ['D6', 'E6', 'G6', 'A6', 'B6', 'D7'][(Math.random() * 6) | 0];
-      note(freq(n), ctx.currentTime + 0.01, 0.07);
+      note(freq(n), ctx.currentTime + 0.01, vel);
     },
     toggle() {
       if (!started) return muted;
@@ -1077,20 +1117,24 @@ soundBtn.addEventListener('click', () => {
 
 document.addEventListener('visibilitychange', () => MusicBox.visibility(document.hidden));
 
-/* ---------- stardust on every tap / click, trail on mouse move ---------- */
+/* ---------- stardust on every tap / click, comet trail on mouse move / finger slide ---------- */
 addEventListener('pointerdown', e => {
   burst(e.clientX, e.clientY, reduceMotion ? 14 : 32, 1);
   if (!soundBtn.contains(e.target)) MusicBox.sparkle();
+  Trail.reset();
 }, { passive: true });
 
-let lastTrail = 0;
+// Mouse: every movement. Touch/pen: handled by touchmove below, which keeps firing
+// even when the browser decides the gesture is a scroll (pointermove would be cancelled).
 addEventListener('pointermove', e => {
-  if (e.pointerType !== 'mouse' || reduceMotion) return;
-  const now = performance.now();
-  if (now - lastTrail < 32) return;
-  lastTrail = now;
-  trail(e.clientX, e.clientY);
+  if (e.pointerType === 'mouse') Trail.move(e.clientX, e.clientY);
 }, { passive: true });
+addEventListener('touchmove', e => {
+  const t = e.touches[0];
+  if (t) Trail.move(t.clientX, t.clientY);
+}, { passive: true });
+addEventListener('touchend', () => Trail.reset(), { passive: true });
+document.addEventListener('mouseleave', () => Trail.reset());
 
 /* ============================================================
    MAIN LOOP

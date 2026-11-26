@@ -34,15 +34,15 @@
     ink: '#8a1c1c', 'ink-script': '#b3262a', 'ink-star': '#d4a03c',
     'seal-1': '#fff0b8', 'seal-2': '#f2c14e', 'seal-3': '#c48a1c', 'seal-4': '#7a520c', 'seal-glow': '255,200,90', 'env-glow': '255,110,70'
   },
-  sky: ['#12030a', '#2a0710', '#3a0c12', '#2a0e0e'],
-  glows: [[50, 112, 1100, 620, 'rgba(255,90,50,.26)'], [85, -8, 700, 480, 'rgba(255,190,90,.12)'], [8, 12, 600, 420, 'rgba(255,60,80,.10)']],
+  sky: ['#160306', '#2c0710', '#470b14', '#2e0709'],
+  glows: [[50, 112, 1100, 620, 'rgba(255,100,50,.24)'], [85, -8, 700, 480, 'rgba(255,200,110,.10)'], [8, 12, 600, 420, 'rgba(255,60,90,.08)']],
   ground: 'radial-gradient(60% 100% at 50% 100%, rgba(255,120,60,.14), transparent 72%)',
   cardFill: 'rgba(48,10,14,.74)',
   sealText: '福',
-  fall: { type: 'confetti', colors: ['#e8262c', '#ffcf5a', '#ff8a3d', '#c8141a'] },
+  fall: { type: 'petals', colors: ['#ffd6e0', '#ffc2d1', '#fff1f4', '#f9b7c8'], density: .3 },     // plum blossom
   sparks: ['255,90,70', '255,200,100', '255,150,60', '255,236,180'],
   confetti: ['#e8262c', '#ffcf5a', '#ff8a3d', '#fff0c0'],
-  stars: true,
+  exportBlend: 'source-over',
   music: {                                     // 《新年好》 (traditional melody), C major, 4/4
     beat: 0.4, pickup: 0, bar: 4,
     melody: [
@@ -61,99 +61,133 @@
   },
 
   scene(api) {
-    const { rand, clamp, easeOut, TAU, glow, reduceMotion } = api;
-    const COL = { gold: '255,206,110', champagne: '255,236,190', red: '255,70,60', orange: '255,140,60' };
-    const SPR = {}; for (const k in COL) SPR[k] = glow(COL[k]);
-    const LGLOW = glow('255,90,50');
-    const PAL = [['255,80,60', '255,210,120'], ['255,200,90', '255,245,210'], ['255,120,60', '255,60,60'], ['255,215,130', '255,90,90']];
-    const KAI = `'Kaiti SC','STKaiti','KaiTi','Noto Serif SC','Songti SC','Noto Sans SC','WenQuanYi Zen Hei','PingFang SC','Microsoft YaHei',serif`;
+    const { rand, clamp, easeOut, easeBack, TAU, glow, reduceMotion } = api;
+    const GOLD = glow('255,206,110'), WARM = glow('255,236,190'), LGLOW = glow('255,110,60'), RED = glow('255,70,50');
+    const PAL = [['255,80,60', '255,210,120'], ['255,200,90', '255,245,210'], ['255,215,130', '255,90,90']];
+    const KAI = `'Kaiti SC','STKaiti','KaiTi','BiauKai','Noto Serif SC','Songti SC','STSong','Noto Sans SC','WenQuanYi Zen Hei','PingFang SC','Microsoft YaHei',serif`;
     const pick = a => a[(Math.random() * a.length) | 0];
-    let parts = [], G = null, nextFw = 3200;
+    let G = null, dust = [], nextFw = 3600;
 
-    function lantern(ctx, L, el, k) {
-      const ang = .09 * Math.sin(el * .0015 + L.ph);
-      const { rx, ry } = G;
+    const goldGrad = (ctx, x0, y0, x1, y1) => {
+      const g = ctx.createLinearGradient(x0, y0, x1, y1);
+      g.addColorStop(0, '#8a5a12'); g.addColorStop(.45, '#f7d784'); g.addColorStop(.55, '#ffe9ad'); g.addColorStop(1, '#a8711a');
+      return g;
+    };
+    const rrect = (ctx, x, y, w, h, r) => {
+      ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+    };
+    function tassel(ctx, x, y, len, el, ph) {                     // gold knot + red silk threads
+      ctx.fillStyle = goldGrad(ctx, x - 4, 0, x + 4, 0);
+      ctx.beginPath(); ctx.arc(x, y + 3, 3.2, 0, TAU); ctx.fill();
+      rrect(ctx, x - 3, y + 6, 6, 5, 1.5); ctx.fill();
+      const sway = Math.sin(el * .002 + ph) * 2.5;
+      ctx.strokeStyle = '#d0202a'; ctx.lineWidth = 1;
+      for (let i = -3; i <= 3; i++) {
+        ctx.beginPath(); ctx.moveTo(x + i * .8, y + 11);
+        ctx.quadraticCurveTo(x + i * 1.2, y + 11 + len * .5, x + i * 1.6 + sway, y + 11 + len); ctx.stroke();
+      }
+    }
+    function lantern(ctx, L, el, k) {                             // palace lantern: gold caps, ribs, gloss, tassel
+      const rx = G.rx, ry = rx * .96;
       ctx.save();
-      ctx.translate(L.x, -4);
-      ctx.rotate(ang);
+      ctx.translate(L.x, -2); ctx.rotate(.06 * Math.sin(el * .0013 + L.ph));
       ctx.globalAlpha = k;
-      const cy = L.len + ry;
-      ctx.strokeStyle = 'rgba(230,180,90,.8)'; ctx.lineWidth = 1.2;            // string
+      ctx.strokeStyle = 'rgba(240,195,100,.85)'; ctx.lineWidth = 1.2;
       ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, L.len); ctx.stroke();
-      ctx.globalCompositeOperation = 'lighter';                                 // warm glow
+      const capW = rx * .72, capH = ry * .22, top = L.len, cy = top + capH * .8 + ry, bot = cy + ry - capH * .2;
+      ctx.globalCompositeOperation = 'lighter';
       ctx.globalAlpha = .55 * k * (.85 + .15 * Math.sin(el * .004 + L.ph));
-      ctx.drawImage(LGLOW, -rx * 2, cy - ry * 2, rx * 4, ry * 4);   // stays inside the canvas: no clipped edges
+      ctx.drawImage(LGLOW, -rx * 1.7, cy - rx * 1.7, rx * 3.4, rx * 3.4);
       ctx.globalCompositeOperation = 'source-over';
       ctx.globalAlpha = k;
-      const body = ctx.createRadialGradient(-rx * .2, cy - ry * .25, 2, 0, cy, rx * 1.15);
-      body.addColorStop(0, '#ffc27a'); body.addColorStop(.45, '#ec3a2c'); body.addColorStop(1, '#8c0c12');
+      const body = ctx.createRadialGradient(-rx * .15, cy - ry * .2, rx * .05, 0, cy, rx * 1.05);
+      body.addColorStop(0, '#ffe2a0'); body.addColorStop(.3, '#ff8a45'); body.addColorStop(.62, '#e2242b'); body.addColorStop(1, '#7c0810');
       ctx.fillStyle = body;
       ctx.beginPath(); ctx.ellipse(0, cy, rx, ry, 0, 0, TAU); ctx.fill();
-      ctx.strokeStyle = 'rgba(110,8,10,.45)'; ctx.lineWidth = 1;               // ribs
-      for (const f of [.38, .72]) { ctx.beginPath(); ctx.ellipse(0, cy, rx * f, ry, 0, 0, TAU); ctx.stroke(); }
-      ctx.fillStyle = '#e9b949';                                                // caps
-      ctx.fillRect(-rx * .48, cy - ry - ry * .12, rx * .96, ry * .2);
-      ctx.fillRect(-rx * .48, cy + ry - ry * .08, rx * .96, ry * .2);
-      ctx.strokeStyle = '#e9b949'; ctx.lineWidth = 1.1;                         // tassel
-      const ty = cy + ry + ry * .12, sway = Math.sin(el * .002 + L.ph) * 2;
-      for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(i * 1.6, ty); ctx.lineTo(i * 2.2 + sway, ty + ry * .7); ctx.stroke(); }
+      ctx.strokeStyle = 'rgba(110,6,10,.38)'; ctx.lineWidth = 1;
+      for (const f of [.28, .58, .84]) { ctx.beginPath(); ctx.ellipse(0, cy, rx * f, ry, 0, 0, TAU); ctx.stroke(); }
+      ctx.beginPath(); ctx.moveTo(0, cy - ry); ctx.lineTo(0, cy + ry); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.13)';
+      ctx.beginPath(); ctx.ellipse(-rx * .45, cy - ry * .22, rx * .15, ry * .46, -.18, 0, TAU); ctx.fill();
+      ctx.fillStyle = goldGrad(ctx, -capW / 2, 0, capW / 2, 0);
+      rrect(ctx, -capW / 2, top, capW, capH, capH * .35); ctx.fill();
+      rrect(ctx, -capW / 2, bot, capW, capH, capH * .35); ctx.fill();
+      tassel(ctx, 0, bot + capH, ry * .9, el, L.ph);
+      ctx.restore();
+    }
+    function doufang(ctx, el, k) {                                // hanging red diamond with a gold 福
+      const { cx, hangY, cy, D } = G;
+      const s = D * Math.SQRT2;
+      ctx.save();
+      ctx.translate(cx, hangY); ctx.rotate(.035 * Math.sin(el * .0011));
+      ctx.globalAlpha = k;
+      ctx.strokeStyle = 'rgba(240,195,100,.85)'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, cy - hangY - D * .98); ctx.stroke();
+      ctx.translate(0, cy - hangY);
+      const sc = .72 + .28 * easeBack(k); ctx.scale(sc, sc);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = .42 * k; ctx.drawImage(RED, -D * 1.45, -D * 1.45, D * 2.9, D * 2.9);
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = k;
+      ctx.save();
+      ctx.rotate(Math.PI / 4);
+      ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 6;
+      const paper = ctx.createLinearGradient(-s / 2, -s / 2, s / 2, s / 2);
+      paper.addColorStop(0, '#ec3a3f'); paper.addColorStop(.5, '#c8141e'); paper.addColorStop(1, '#960b14');
+      ctx.fillStyle = paper; ctx.fillRect(-s / 2, -s / 2, s, s);
+      ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+      ctx.strokeStyle = goldGrad(ctx, -s / 2, -s / 2, s / 2, s / 2);
+      ctx.lineWidth = Math.max(2, s * .028); ctx.strokeRect(-s * .45, -s * .45, s * .9, s * .9);
+      ctx.lineWidth = 1; ctx.strokeRect(-s * .405, -s * .405, s * .81, s * .81);
+      ctx.fillStyle = '#f3c76a';
+      for (const [x, y] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { ctx.beginPath(); ctx.arc(x * s * .36, y * s * .36, s * .02, 0, TAU); ctx.fill(); }
+      ctx.restore();
+      const fs = D * 1.02;
+      ctx.font = `700 ${fs}px ${KAI}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const fg = ctx.createLinearGradient(0, -fs / 2, 0, fs / 2);
+      fg.addColorStop(0, '#fff3c4'); fg.addColorStop(.5, '#f6c95a'); fg.addColorStop(1, '#c58d22');
+      ctx.fillStyle = fg; ctx.shadowColor = 'rgba(255,190,80,.6)'; ctx.shadowBlur = 14;
+      ctx.fillText('福', 0, fs * .05);
+      ctx.shadowBlur = 0;
+      tassel(ctx, 0, D * .98, D * .5, el, .7);
       ctx.restore();
     }
 
     return {
       build(w, h) {
-        parts = [];
-        const cx = w / 2, cy = h * .58, D = Math.min(w * .3, h * .33);
-        const dens = clamp((w * h) / (380 * 430), .45, 1) * (reduceMotion ? .6 : 1);
-        const V = [[0, -D], [D, 0], [0, D], [-D, 0]];
-        const nE = Math.round(46 * dens);
-        for (let e = 0; e < 4; e++) {                                           // diamond outline (斗方)
-          const [ax, ay] = V[e], [bx, by] = V[(e + 1) % 4];
-          for (let i = 0; i < nE; i++) {
-            const t = i / nE;
-            parts.push({ tx: cx + ax + (bx - ax) * t, ty: cy + ay + (by - ay) * t, size: rand(1, 1.7), col: 'gold', at: (e + t) * 380, edge: true, tw: rand(TAU) });
-            if (i % 2 === 0) parts.push({ tx: cx + (ax + (bx - ax) * t) * .88, ty: cy + (ay + (by - ay) * t) * .88, size: rand(.6, 1), col: 'champagne', at: 300 + (e + t) * 380, edge: true, tw: rand(TAU) });
-          }
-        }
-        const nF = Math.round(260 * dens);                                      // red glow inside
-        for (let i = 0; i < nF; i++) {
-          let x, y; do { x = rand(-D, D); y = rand(-D, D); } while (Math.abs(x) + Math.abs(y) > D * .86);
-          parts.push({ tx: cx + x, ty: cy + y, size: rand(.8, 1.6), col: Math.random() < .7 ? 'red' : 'orange', at: 600 + rand(900), dim: .45, edge: true, tw: rand(TAU) });
-        }
-        const step = Math.max(2, Math.round(D / 30));
-        const pts = api.textPoints('福', D * 1.12, KAI, w, h, step, cx, cy + D * .04, 700);
-        for (const p of pts) {
-          parts.push({ tx: p.x, ty: p.y, sx: cx + rand(-w * .6, w * .6), sy: -rand(20, 120), size: rand(1.1, 2), col: Math.random() < .75 ? 'gold' : 'champagne', at: 1200 + rand(900), tw: rand(TAU) });
-        }
-        const rx = clamp(w * .075, 16, 32);
-        G = { cx, cy, D, rx, ry: rx * 1.12, lanterns: [{ x: w * .16, len: h * .16, ph: 0 }, { x: w * .84, len: h * .24, ph: 1.4 }] };
+        const D = Math.min(w * .26, h * .26), hangY = h * .04;
+        const rx = clamp(w * .07, 15, 28);
+        const cy = Math.max(hangY + h * .1 + D, h * .47);                       // centred on tall (desktop) canvases
+        G = { cx: w / 2, hangY, D, cy, rx,
+              lanterns: [{ x: w * .14, len: h * .16, ph: 0 }, { x: w * .86, len: h * .28, ph: 1.4 }] };
+        const dens = clamp((w * h) / (380 * 430), .5, 1) * (reduceMotion ? .5 : 1);
+        dust = Array.from({ length: Math.round(80 * dens) }, () => ({
+          x: rand(-1.7, 1.7) * D, y: rand(-1.6, 1.6) * D, v: rand(.4, 1.2), size: rand(.6, 1.5), tw: rand(TAU), ph: rand(TAU), warm: Math.random() < .4
+        }));
       },
-      restart() { nextFw = 3200; },
-      frame(ctx, el, w, h) {
-        const { cx, cy, D } = G;
-        const lk = easeOut(clamp(el / 1100, 0, 1));
-        for (const L of G.lanterns) lantern(ctx, L, el, lk);
+      restart() { nextFw = 3600; },
+      frame(ctx, el) {
+        const k = easeOut(clamp((el - 200) / 1100, 0, 1));
+        for (const L of G.lanterns) lantern(ctx, L, el, easeOut(clamp(el / 1000, 0, 1)));
+        doufang(ctx, el, k);
+        const { cx, cy, D } = G, span = 3.2 * D;                                   // gold dust drifting up
         ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = .3 * easeOut(clamp(el / 1600, 0, 1));
-        ctx.drawImage(SPR.red, cx - D * 1.5, cy - D * 1.5, D * 3, D * 3);
-        for (const p of parts) {
-          const kk = clamp((el - p.at) / (p.edge ? 600 : 1300), 0, 1);
-          if (kk <= 0) continue;
-          const k = easeOut(kk);
-          const x = p.edge ? p.tx : p.sx + (p.tx - p.sx) * k;
-          const y = p.edge ? p.ty + (1 - k) * 8 : p.sy + (p.ty - p.sy) * k;
-          const tw = .68 + .32 * Math.sin(el * .003 + p.tw);
-          const s = p.size * 4.2;
-          ctx.globalAlpha = k * tw * (p.dim || 1);
-          ctx.drawImage(SPR[p.col], x - s / 2, y - s / 2, s, s);
+        for (const d of dust) {
+          let y = d.y - el * d.v * .012;
+          y = ((y + 1.6 * D) % span + span) % span - 1.6 * D;
+          const x = cx + d.x + Math.sin(el * .001 + d.ph) * 6;
+          const fade = 1 - Math.pow(Math.abs(y) / (1.6 * D), 2);
+          ctx.globalAlpha = k * fade * (.35 + .65 * Math.abs(Math.sin(el * .002 + d.tw)));
+          const s = d.size * 4.2;
+          ctx.drawImage(d.warm ? WARM : GOLD, x - s / 2, cy + y - s / 2, s, s);
         }
         if (el > nextFw) {
-          nextFw = el + (reduceMotion ? rand(4000, 6000) : rand(2200, 4200));
+          nextFw = el + (reduceMotion ? rand(4500, 6500) : rand(2800, 5000));
           const { W, H } = api.viewport();
-          api.firework(rand(W * .12, W * .88), rand(H * .08, H * .38), pick(PAL));
+          api.firework(rand(W * .12, W * .88), rand(H * .08, H * .36), pick(PAL));
         }
       },
-      anchor() { return { x: G.cx, y: G.cy - G.D - 8 }; },
+      anchor() { return { x: G.cx, y: G.cy - G.D - 4 }; },
       tap(x, y, inside, px, py) {
         api.firework(px, Math.min(py, api.viewport().H * .8), pick(PAL));
         return true;

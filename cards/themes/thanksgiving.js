@@ -31,20 +31,19 @@
     'paper-a': '#c9a074', 'paper-b': '#a87d52', 'front-a': '#b88d60', 'front-b': '#d1ab7f',
     'flap-a': '#d9b88c', 'flap-b': '#b78f62', 'flapin-a': '#9a724a', 'flapin-b': '#86613c',
     ink: '#6b3f1d', 'ink-script': '#8a4b1c', 'ink-star': '#c7812e',
-    'seal-1': '#ee8f55', 'seal-2': '#b8461c', 'seal-3': '#7e2a0e', 'seal-4': '#4a1606', 'seal-glow': '255,140,70', 'env-glow': '255,170,100'
+    'seal-1': '#d8664a', 'seal-2': '#9a2c1e', 'seal-3': '#621a12', 'seal-4': '#3a0f0a', 'seal-glow': '255,140,70', 'env-glow': '255,170,100'
   },
-  sky: ['#0b0604', '#1a0e07', '#2a1709', '#2e1a0c'],
-  glows: [[50, 112, 1100, 620, 'rgba(255,150,60,.24)'], [85, -8, 700, 480, 'rgba(255,190,110,.10)'], [8, 12, 600, 420, 'rgba(200,70,40,.10)']],
+  sky: ['#0e0709', '#1d0d0c', '#2f160e', '#3a1d0f'],
+  glows: [[50, 112, 1100, 620, 'rgba(255,140,60,.28)'], [85, -8, 700, 480, 'rgba(255,170,120,.10)'], [8, 12, 600, 420, 'rgba(170,60,90,.12)']],
   ground: 'radial-gradient(60% 100% at 50% 100%, rgba(255,160,80,.12), transparent 72%)',
-  cardFill: 'rgba(36,20,10,.74)',
+  cardFill: 'rgba(34,16,12,.74)',
   sealSvg: `<svg viewBox="0 0 100 100" fill="none" stroke-linecap="round" stroke-linejoin="round">
       <defs><g id="leaf"><path d="M50 18c18 10 26 30 16 48-6 10-16 14-16 14s-10-4-16-14c-10-18-2-38 16-48z"/><path d="M50 28v56M50 46l-9-8M50 56l9-8M50 66l-8-6"/></g></defs>
       <use href="#leaf" stroke="rgba(50,10,0,.55)" stroke-width="5.5" transform="translate(1.2 1.6)"/>
       <use href="#leaf" stroke="rgba(255,214,170,.7)" stroke-width="4.5"/>
     </svg>`,
-  fall: { type: 'leaves', colors: ['#e0671c', '#c2410c', '#f59e0b', '#b45309', '#dc2626', '#d97706'] },
+  fall: { type: 'leaves', colors: ['#d9622b', '#b8401f', '#e8a13a', '#a8461c', '#c9302c'], density: .16 },
   sparks: ['255,170,70', '255,214,120', '255,120,60', '255,236,190'],
-  exportBlend: 'source-over',
   music: {                                     // original warm waltz, G major, 3/4
     beat: 0.5, pickup: 1, bar: 3,
     melody: [
@@ -65,80 +64,105 @@
 
   scene(api) {
     const { rand, clamp, easeOut, TAU, glow, reduceMotion } = api;
-    const LEAVES = ['#e0671c', '#c2410c', '#f59e0b', '#b45309', '#dc2626', '#d97706'].flatMap(c => [api.leafSprite(c, 'oval'), api.leafSprite(c, 'oval'), api.leafSprite(c, 'maple')]);
-    const GOLD = glow('255,200,110'), AMBER = glow('255,150,60'), BERRY = glow('230,60,50'), FLAME = glow('255,170,70'), CORE = glow('255,244,210');
-    let leaves = [], dots = [], G = null;
+    const C = { gold: '255,206,110', amber: '255,160,60', orange: '255,118,45', red: '235,68,45', crimson: '200,40,55', cream: '255,238,205' };
+    const SPR = {}; for (const k in C) SPR[k] = glow(C[k]);
+    // right half of a maple leaf (unit size, y down), mirrored for the left half
+    const HALF = [[0, -1], [.12, -.78], [.26, -.86], [.2, -.5], [.42, -.62], [.5, -.5], [.75, -.6], [.64, -.34], [.95, -.26],
+                  [.7, -.1], [.8, .04], [.48, .1], [.56, .3], [.24, .2], [.06, .32]];
+    const POLY = [...HALF, ...HALF.slice(1).reverse().map(([x, y]) => [-x, y])];
+    const BASE = [0, .3];
+    const VEINS = [[0, -.9], [.86, -.25], [-.86, -.25], [.62, -.55], [-.62, -.55], [.5, .23], [-.5, .23]];
+    const inside = (px, py) => {
+      let c = false;
+      for (let i = 0, j = POLY.length - 1; i < POLY.length; j = i++) {
+        const [xi, yi] = POLY[i], [xj, yj] = POLY[j];
+        if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) c = !c;
+      }
+      return c;
+    };
     const pick = a => a[(Math.random() * a.length) | 0];
+    let parts = [], fills = [], embers = [], G = null, nextE = 0;
 
     return {
       build(w, h) {
-        leaves = []; dots = [];
-        const R = Math.min(w, h) * .34, cx = w / 2, cy = h * .5;
-        const dens = clamp((w * h) / (380 * 430), .5, 1) * (reduceMotion ? .7 : 1);
-        const n = Math.round(85 * dens) + 20;
-        for (let layer = 0; layer < 2; layer++) for (let i = 0; i < n; i++) {
-          const ang = (i + layer * .5) / n * TAU + rand(-.04, .04);
-          leaves.push({ ang, r: R * (1 + rand(-.13, .13)), rot: ang + Math.PI / 2 + rand(-.8, .8), size: rand(15, 27) * (R / 110),
-            spr: pick(LEAVES), at: (i / n) * 1500 + layer * 250 + rand(200), ph: rand(TAU), flip: Math.random() < .5 ? -1 : 1 });
+        parts = []; fills = []; embers = [];
+        const S = Math.min(w * .46, h * .43), cx = w / 2, cy = h * .46;
+        const dens = clamp((w * h) / (380 * 430), .5, 1) * (reduceMotion ? .6 : 1);
+        let total = 0;
+        const segs = POLY.map((a, i) => { const b = POLY[(i + 1) % POLY.length]; const len = Math.hypot(b[0] - a[0], b[1] - a[1]) * S; total += len; return [a, b, len]; });
+        let acc = 0;                                                          // outline, traced in order
+        for (const [a, b, len] of segs) {
+          const n = Math.max(1, Math.round(len / 3));
+          for (let j = 0; j < n; j++) {
+            const t = j / n;
+            parts.push({ x: a[0] + (b[0] - a[0]) * t, y: a[1] + (b[1] - a[1]) * t, size: rand(1, 1.6), col: Math.random() < .6 ? 'gold' : 'amber', at: (acc + t * len) / total * 1500, tw: rand(TAU) });
+          }
+          acc += len;
         }
-        for (let i = 0; i < Math.round(40 * dens); i++) {                    // berries + gold dots
-          dots.push({ ang: rand(TAU), r: R * (1 + rand(-.1, .1)), size: rand(1.4, 2.4), spr: Math.random() < .6 ? BERRY : GOLD, at: 1300 + rand(800), tw: rand(TAU) });
+        for (const v of VEINS) {                                              // veins light up next
+          const len = Math.hypot(v[0] - BASE[0], v[1] - BASE[1]) * S, n = Math.round(len / 4);
+          for (let j = 0; j <= n; j++) {
+            const t = j / n;
+            parts.push({ x: BASE[0] + (v[0] - BASE[0]) * t, y: BASE[1] + (v[1] - BASE[1]) * t, size: rand(.6, 1), col: 'cream', at: 1400 + t * 700, tw: rand(TAU), dim: .75 });
+          }
         }
-        for (let i = 0; i < Math.round(90 * dens); i++) {                    // inner sparkle ring
-          dots.push({ ang: i / 90 * TAU, r: R * .76, size: rand(.5, 1), spr: GOLD, at: 1700 + rand(600), tw: rand(TAU), spin: true });
+        for (let j = 0, n = Math.round(.62 * S / 3.5); j <= n; j++) {        // stem
+          const t = j / n;
+          parts.push({ x: .07 * t * t, y: .3 + .62 * t, size: rand(.8, 1.3), col: 'amber', at: 1500 + t * 400, tw: rand(TAU) });
         }
-        G = { cx, cy, R };
+        const nF = Math.round(900 * dens);                                    // body: gold at the top → crimson at the base
+        for (let i = 0; i < nF; i++) {
+          let x, y; do { x = rand(-1, 1); y = rand(-1, .34); } while (!inside(x, y));
+          const t = clamp((y + 1) / 1.34 + rand(-.15, .15), 0, 1);
+          const p = { x, y, size: rand(.7, 1.6), col: t < .28 ? 'gold' : t < .52 ? 'amber' : t < .76 ? 'orange' : pick(['red', 'crimson']), at: 800 + rand(1300), tw: rand(TAU), dim: .85 };
+          parts.push(p); fills.push(p);
+        }
+        G = { cx, cy, S };
       },
+      restart() { embers = []; nextE = 0; },
       frame(ctx, el, w, h) {
-        const { cx, cy, R } = G;
+        const { cx, cy, S } = G;
+        const turn = .93 + .07 * Math.cos(el * .00045);                       // slowly turning in the air
+        const tilt = .06 * Math.sin(el * .0007), c = Math.cos(tilt), s = Math.sin(tilt);
+        const pos = p => { const x0 = p.x * S * turn, y0 = p.y * S; return [cx + x0 * c - y0 * s, cy + x0 * s + y0 * c]; };
         ctx.globalCompositeOperation = 'lighter';
-        const bg = easeOut(clamp(el / 1600, 0, 1));
-        ctx.globalAlpha = .35 * bg;
-        ctx.drawImage(AMBER, cx - R * 1.4, cy - R * 1.4, R * 2.8, R * 2.8);
-        ctx.globalCompositeOperation = 'source-over';
-        const sway = Math.sin(el * .0006) * .03;
-        for (const l of leaves) {
-          const kk = clamp((el - l.at) / 700, 0, 1);
-          if (kk <= 0) continue;
-          const k = easeOut(kk), a = l.ang + sway;
-          const x = cx + Math.cos(a) * l.r, y = cy + Math.sin(a) * l.r + (1 - k) * -10;
+        const bg = easeOut(clamp(el / 1800, 0, 1));
+        const gw = Math.min(S * 2.7, w), gh = Math.min(S * 2.7, h);
+        ctx.globalAlpha = .32 * bg; ctx.drawImage(SPR.amber, cx - gw / 2, cy - gh / 2, gw, gh);
+        const fk = easeOut(clamp((el - 900) / 1600, 0, 1));                  // translucent leaf body under the particles
+        if (fk > 0) {
           ctx.save();
-          ctx.translate(x, y);
-          ctx.rotate(l.rot + .08 * Math.sin(el * .0018 + l.ph));
-          ctx.scale(l.flip * k, k);
-          ctx.globalAlpha = .95 * k;
-          ctx.drawImage(l.spr, -l.size / 2, -l.size / 2, l.size, l.size);
+          ctx.translate(cx, cy); ctx.rotate(tilt); ctx.scale(S * turn, S);
+          ctx.beginPath(); POLY.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath();
+          const lg = ctx.createRadialGradient(0, -.25, 0, 0, -.1, 1.15);
+          lg.addColorStop(0, 'rgba(255,214,120,.95)'); lg.addColorStop(.45, 'rgba(255,140,50,.8)'); lg.addColorStop(1, 'rgba(205,45,40,.7)');
+          ctx.fillStyle = lg; ctx.globalAlpha = .34 * fk;
+          ctx.fill();
           ctx.restore();
         }
-        ctx.globalCompositeOperation = 'lighter';
-        for (const d of dots) {
-          const kk = clamp((el - d.at) / 600, 0, 1);
+        for (const p of parts) {
+          const kk = clamp((el - p.at) / 650, 0, 1);
           if (kk <= 0) continue;
-          const a = d.ang + (d.spin ? el * .00012 : sway);
-          const x = cx + Math.cos(a) * d.r, y = cy + Math.sin(a) * d.r, s = d.size * 4.2;
-          ctx.globalAlpha = kk * (.6 + .4 * Math.sin(el * .003 + d.tw));
-          ctx.drawImage(d.spr, x - s / 2, y - s / 2, s, s);
+          const e = easeOut(kk);
+          const [x, y] = pos(p);
+          const tw = .66 + .34 * Math.sin(el * .0028 + p.tw), d = p.size * 4.2;
+          ctx.globalAlpha = e * tw * (p.dim || 1);
+          ctx.drawImage(SPR[p.col], x - d / 2, y - d / 2 + (1 - e) * 10, d, d);
         }
-        const ck = easeOut(clamp((el - 1400) / 900, 0, 1));                 // candle in the middle
-        if (ck > 0) {
-          const ch = R * .5, cw = R * .2, top = cy + R * .32 - ch;
-          ctx.globalCompositeOperation = 'source-over';
-          ctx.globalAlpha = ck;
-          const body = ctx.createLinearGradient(cx - cw / 2, 0, cx + cw / 2, 0);
-          body.addColorStop(0, '#d9c4a0'); body.addColorStop(.5, '#fff3dc'); body.addColorStop(1, '#c9b08a');
-          ctx.fillStyle = body;
-          ctx.fillRect(cx - cw / 2, top, cw, ch);
-          ctx.fillStyle = 'rgba(255,240,210,.9)';
-          ctx.beginPath(); ctx.ellipse(cx, top, cw / 2, cw * .14, 0, 0, TAU); ctx.fill();
-          ctx.globalCompositeOperation = 'lighter';
-          const fl = .85 + .15 * Math.sin(el * .021) + .05 * Math.sin(el * .057);
-          ctx.globalAlpha = .5 * ck; ctx.drawImage(AMBER, cx - R * .7, top - R * .75, R * 1.4, R * 1.4);
-          const s1 = R * .42 * fl, s2 = R * .14;
-          ctx.globalAlpha = .95 * ck; ctx.drawImage(FLAME, cx - s1 / 2, top - s1 * .85, s1, s1 * 1.3);
-          ctx.globalAlpha = ck; ctx.drawImage(CORE, cx - s2 / 2, top - s2 * 1.1, s2, s2 * 1.4);
+        if (el > 2600 && el > nextE && fills.length) {                        // embers drifting off the leaf
+          nextE = el + (reduceMotion ? rand(500, 900) : rand(140, 320));
+          const [x, y] = pos(pick(fills));
+          embers.push({ x, y, vx: rand(-.25, .25), vy: rand(.25, .6), born: el, life: rand(1600, 2800), ph: rand(TAU), col: pick(['amber', 'orange', 'red', 'gold']) });
+        }
+        for (let i = embers.length - 1; i >= 0; i--) {
+          const m = embers[i], age = el - m.born;
+          if (age > m.life) { embers.splice(i, 1); continue; }
+          const x = m.x + m.vx * age * .06 + Math.sin(age * .002 + m.ph) * 8, y = m.y + m.vy * age * .06;
+          ctx.globalAlpha = (1 - age / m.life) * .85;
+          ctx.drawImage(SPR[m.col], x - 3, y - 3, 6, 6);
         }
       },
-      anchor() { return { x: G.cx, y: G.cy - G.R * 1.18 }; }
+      anchor() { return { x: G.cx, y: G.cy - G.S - 6 }; }
     };
   }
 };

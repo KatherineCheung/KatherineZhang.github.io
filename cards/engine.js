@@ -263,6 +263,7 @@ const FALL = (() => {
     default:         return { snow: true, density: 1 };
   }
 })();
+if (TH.fall && TH.fall.density) FALL.density = TH.fall.density;      // a theme can thin out its falling layer
 const flakes = [];
 const FRONT = 0.82;
 function newFlake(anywhere) {

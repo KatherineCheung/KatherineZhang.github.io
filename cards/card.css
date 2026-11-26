@@ -228,8 +228,8 @@ main#stage > section{grid-area:1/1}
 .actions.show{opacity:1;pointer-events:auto}
 .pill{
   appearance:none;-webkit-appearance:none;cursor:pointer;text-decoration:none;
-  display:inline-block;padding:.7em 1.15em;
-  font:500 .74rem/1 var(--serif);letter-spacing:.18em;text-transform:uppercase;white-space:nowrap;
+  display:inline-block;padding:.62em 1.2em;
+  font:italic 500 .95rem/1 var(--serif);letter-spacing:.03em;white-space:nowrap;
   color:rgba(var(--accent-rgb),.9);background:rgba(var(--accent-rgb),.05);
   border:1px solid rgba(var(--accent-rgb),.32);border-radius:999px;
   transition:background .3s, border-color .3s;
@@ -342,6 +342,7 @@ main#stage > section{grid-area:1/1}
 .zh .sig{font-size:clamp(1.25rem,4.8vw,1.6rem);letter-spacing:.08em}
 .zh .hint{letter-spacing:.12em}
 .zh .tip{letter-spacing:.3em}
+.zh .pill{font-style:normal;font-size:.86rem;letter-spacing:.1em}
 .zh .letter .l-script{font-size:calc(var(--w) * .085);letter-spacing:.08em}
 @media (prefers-reduced-motion:reduce){
   .envelope,.envelope::before,.seal,.hint,.hint .shine{animation:none}

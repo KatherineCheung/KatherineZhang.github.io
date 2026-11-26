@@ -47,7 +47,7 @@
     main{max-width:1040px}
     .layout{grid-template-columns:minmax(0,1fr) 360px;align-items:start}
     .layout > .panel{grid-column:1}
-    .layout > .pv-panel{grid-column:2;grid-row:1 / span 3;position:sticky;top:20px}
+    .layout > .pv-panel{grid-column:2;grid-row:1 / span 4;position:sticky;top:20px}
     .phone.collapsed{display:block}
     .pv-head button{display:none}
   }
@@ -140,6 +140,17 @@
   ul.sent .btn{padding:6px 11px;font-size:.78rem;border-radius:9px}
   .empty{color:var(--muted);font-size:.85rem;margin:0}
 
+  /* batch mode */
+  textarea.list{min-height:150px;font-size:15px;line-height:1.7}
+  ul.batch .who{white-space:normal}
+  ul.batch .who small{display:block;margin:2px 0 0}
+  ul.batch li.is-done .who{opacity:.5}
+  .done-btn{
+    appearance:none;flex:none;width:28px;height:28px;padding:0;border-radius:50%;cursor:pointer;
+    font:inherit;font-size:.85rem;color:var(--muted);background:none;border:1px solid var(--line);
+  }
+  .done-btn[aria-pressed=true]{background:rgba(37,211,102,.22);border-color:rgba(80,220,130,.6);color:#d9ffe6}
+
   .toast{
     position:fixed;left:50%;bottom:max(22px,env(safe-area-inset-bottom));transform:translate(-50%,20px);
     background:rgba(20,22,46,.92);border:1px solid var(--line);color:var(--gold-soft);
@@ -160,22 +171,33 @@
   <div class="layout">
   <section class="panel">
     <div class="field">
+      <div class="seg" role="group" id="modeSeg" aria-label="Mode">
+        <button type="button" data-mode="single" aria-pressed="true" data-i18n="modeSingle"></button>
+        <button type="button" data-mode="batch" aria-pressed="false" data-i18n="modeBatch"></button>
+      </div>
+    </div>
+    <div class="field">
       <span class="label" data-i18n="themeLabel"></span>
       <div class="themes" id="themes" role="group"></div>
     </div>
     <div class="field">
       <span class="label" data-i18n="langLabel"></span>
-      <div class="seg" role="group" aria-label="Language">
+      <div class="seg" role="group" id="langSeg" aria-label="Language">
         <button type="button" data-lang="zh" aria-pressed="true">中文</button>
         <button type="button" data-lang="en" aria-pressed="false">English</button>
       </div>
     </div>
-    <div class="field">
+    <div class="field" id="toField">
       <label for="to" data-i18n="toLabel"></label>
       <input id="to" type="text" maxlength="24" autocomplete="off" placeholder="妈妈 / Ran / Grandpa">
     </div>
+    <div class="field" id="listField" hidden>
+      <label for="list" data-i18n="listLabel"></label>
+      <textarea id="list" class="list" spellcheck="false"></textarea>
+      <div class="hint"><span data-i18n="listHint"></span><span id="listCount"></span></div>
+    </div>
     <div class="field">
-      <label for="msg" data-i18n="msgLabel"></label>
+      <label for="msg" id="msgLabel"></label>
       <textarea id="msg" maxlength="300"></textarea>
       <div class="hint"><span data-i18n="msgHint"></span><span id="count">0/300</span></div>
       <div class="chips" id="chips"></div>
@@ -207,6 +229,19 @@
     </div>
     <a class="btn wide" id="rec" target="_blank" rel="noopener" data-i18n="rec"></a>
     <p class="note" data-i18n="note"></p>
+  </section>
+
+  <section class="panel" id="batch" hidden>
+    <div class="sent-head">
+      <span class="label" style="margin:0" id="batchTitle"></span>
+      <button type="button" id="batchClear" data-i18n="clear"></button>
+    </div>
+    <ul class="sent batch" id="batchList"></ul>
+    <div class="row">
+      <button class="btn" id="copyAll" type="button" data-i18n="copyAll"></button>
+      <button class="btn" id="csv" type="button" data-i18n="csv"></button>
+    </div>
+    <p class="note" data-i18n="batchNote"></p>
   </section>
 
   <section class="panel">
@@ -251,6 +286,14 @@ const UI = {
     anyone: '（未写名字）', defChip: '默认', msgPh: '写下你想说的话…',
     pvLabel: '实时预览', pvHide: '收起', pvShow: '展开',
     pvNote: '这里跳过了拆信封，也不放音乐。<br>可以在里面点一点、滑一滑，试试互动效果。',
+    modeSingle: '单张', modeBatch: '批量',
+    listLabel: '名单（一行一位）', listHint: '每行：名字 | 手机号（可选）| 专属祝福（可选）', listCount: n => `${n} 位`,
+    listPh: '妈妈 | 85291234567\n爸爸 | 85298765432 | 爸，圣诞快乐！今年辛苦啦\nRan\nGrandma, +1 415 555 0100',
+    msgLabelBatch: '统一祝福语（没写专属祝福的人用这条）', makeBatch: n => `✦ 批量生成 ${n} 张贺卡`,
+    batchTitle: (th, n, d) => `${th.emoji} 已生成 ${n} 张 · 已发送 ${d}`, batchEmpty: '名单是空的，至少写一个名字',
+    copyAll: '📋 复制全部', csv: '⬇️ 导出表格', customTag: '专属祝福', noPhone: '未填手机号', markSent: '标记为已发送',
+    allCopied: '已复制全部祝福 ✦', csvHead: ['名字', '手机号', '链接', '发送内容'],
+    batchNote: '点 💬 会打开 WhatsApp：填了手机号就直接进入和 TA 的聊天，消息已经写好，点发送就行，并自动标记成已发送。<br>微信 / Instagram：点 🔗 复制单个链接，或「复制全部」后逐个粘贴。<br>手机号要带国家或地区区号（如 852、86、1），否则 WhatsApp 找不到人。',
     shareText: (th, to, url) => `${th.emoji} ${to ? to + '，' : ''}给你准备了一张${th.cardName.zh}，点开看看 ✨\n${url}`
   },
   en: {
@@ -265,6 +308,14 @@ const UI = {
     anyone: '(no name)', defChip: 'Default', msgPh: 'Write your message…',
     pvLabel: 'Live preview', pvHide: 'Hide', pvShow: 'Show',
     pvNote: 'The envelope and music are skipped here.<br>Tap or swipe inside to try the effects.',
+    modeSingle: 'One card', modeBatch: 'Batch',
+    listLabel: 'Recipients (one per line)', listHint: 'Each line: name | phone (optional) | own message (optional)', listCount: n => `${n} people`,
+    listPh: 'Mom | 85291234567\nDad | 85298765432 | Merry Christmas, Dad! Thanks for everything\nRan\nGrandma, +1 415 555 0100',
+    msgLabelBatch: 'Shared message (for anyone without their own)', makeBatch: n => `✦ Create ${n} cards`,
+    batchTitle: (th, n, d) => `${th.emoji} ${n} cards · ${d} sent`, batchEmpty: 'The list is empty — add at least one name',
+    copyAll: '📋 Copy all', csv: '⬇️ Export CSV', customTag: 'own message', noPhone: 'no phone', markSent: 'Mark as sent',
+    allCopied: 'All messages copied ✦', csvHead: ['Name', 'Phone', 'Link', 'Message'],
+    batchNote: '💬 opens WhatsApp: with a phone number it goes straight to that chat with the message filled in — just tap send. It’s marked as sent automatically.<br>WeChat / Instagram: 🔗 copies one link, or “Copy all” and paste them one by one.<br>Phone numbers need the country code (e.g. 852, 86, 1), or WhatsApp can’t find the person.',
     shareText: (th, to, url) => `${th.emoji} ${to ? to + ', ' : ''}I made you a little ${th.cardName.en} ✨ Open it here:\n${url}`
   }
 };
@@ -279,7 +330,7 @@ let current = null;   // { to, url, theme, lang }
 if (!store.get('cards.sent', null) && store.get('xmas.sent', null)) {
   store.set('cards.sent', store.get('xmas.sent', []).map(x => ({ ...x, theme: 'christmas', lang: x.lang === 'en' ? 'en' : 'zh' })));
 }
-const toEl = $('#to'), msgEl = $('#msg'), fromEl = $('#from');
+const toEl = $('#to'), msgEl = $('#msg'), fromEl = $('#from'), listEl = $('#list');
 fromEl.value = store.get('cards.from', store.get('xmas.from', ''));
 
 // theme buttons
@@ -303,7 +354,7 @@ function apply() {
     if (typeof v === 'string') el.innerHTML = v;   // only static strings defined above
   });
   $('h1').textContent = t.h1(th);
-  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+  document.querySelectorAll('#langSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
   document.querySelectorAll('.theme').forEach(b => {
     b.setAttribute('aria-pressed', String(b.dataset.theme === theme));
     b.querySelector('.nm').textContent = THEMES[b.dataset.theme].name[lang];
@@ -327,6 +378,9 @@ function apply() {
   markChips();
   renderSent();
   $('#pvToggle').textContent = pvCollapsed ? t.pvShow : t.pvHide;
+  listEl.placeholder = t.listPh;
+  applyMode();
+  renderBatch();
   refreshPreview();
 }
 
@@ -341,15 +395,16 @@ function refreshPreview() {
   if (key !== pvKey) {                 // occasion or language changed: load that card
     pvKey = key;
     const u = new URL(`./${theme}/`, location.href);
-    const p = cardParams();
+    const p = cardParams(pvPerson());
     p.set('preview', '1');
     u.search = p.toString();
     pv.src = u.toString();
   } else {                             // only the words changed: update the text in place
-    try { pv.contentWindow.postMessage({ type: 'card-preview', to: toEl.value, from: fromEl.value, msg: msgEl.value }, location.origin); } catch (e) {}
+    const who = pvPerson();
+    try { pv.contentWindow.postMessage({ type: 'card-preview', to: who.to, from: fromEl.value, msg: who.msg }, location.origin); } catch (e) {}
   }
 }
-[toEl, msgEl, fromEl].forEach(el => el.addEventListener('input', () => { clearTimeout(pvTimer); pvTimer = setTimeout(refreshPreview, 250); }));
+[toEl, msgEl, fromEl, listEl].forEach(el => el.addEventListener('input', () => { clearTimeout(pvTimer); pvTimer = setTimeout(refreshPreview, 250); }));
 $('#pvToggle').addEventListener('click', () => {
   pvCollapsed = !pvCollapsed; store.set('cards.pvCollapsed', pvCollapsed);
   phone.classList.toggle('collapsed', pvCollapsed);
@@ -375,9 +430,9 @@ function pack(v) {
   const b64 = '.' + btoa(String.fromCharCode(...new TextEncoder().encode(v))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   return v[0] === '.' || b64.length < plain ? b64 : v;
 }
-function cardParams() {
+function cardParams(o = {}) {
   const th = THEMES[theme], p = new URLSearchParams();
-  const to = toEl.value.trim(), from = fromEl.value.trim(), msg = msgEl.value.trim();
+  const to = (o.to != null ? o.to : toEl.value).trim(), from = fromEl.value.trim(), msg = (o.msg != null ? o.msg : msgEl.value).trim();
   if (to) p.set('t', pack(to));
   if (from) p.set('f', pack(from));
   if (msg && msg !== th.message[lang]) {
@@ -387,7 +442,7 @@ function cardParams() {
   p.set('l', lang);
   return p;
 }
-document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+document.querySelectorAll('#langSeg button').forEach(b => b.addEventListener('click', () => {
   lang = b.dataset.lang; store.set('cards.lang', lang); apply();
 }));
 
@@ -429,6 +484,7 @@ function show(card) {
 
 $('#make').addEventListener('click', () => {
   store.set('cards.from', fromEl.value.trim());
+  if (mode === 'batch') { makeBatch(); return; }
   const card = buildUrl();
   show(card);
   const list = store.get('cards.sent', []).filter(x => x.url !== card.url);
@@ -466,6 +522,126 @@ function renderSent() {
   });
 }
 $('#clear').addEventListener('click', () => { store.set('cards.sent', []); renderSent(); });
+
+/* ---------- batch mode ---------- */
+let mode = store.get('cards.mode', 'single') === 'batch' ? 'batch' : 'single';
+listEl.value = store.get('cards.list', '');
+// one person per line: "name | phone | own message" — also accepts "name, phone" / "name phone"
+function parseList(text) {
+  const rows = [];
+  for (const raw of text.split('\n')) {
+    const line = raw.trim();
+    if (!line) continue;
+    let name = line, phone = '', msg = '';
+    const parts = line.split(/\s*[|｜]\s*/);
+    if (parts.length > 1) {
+      name = parts[0];
+      if (/^\+?[\d\s\-().]{6,}$/.test(parts[1])) { phone = parts[1]; msg = parts.slice(2).join(' | '); }
+      else msg = parts.slice(1).join(' | ');
+    } else {
+      const m = line.match(/^(.*?)[\s,，、;；:：]+(\+?\d[\d\s\-().]{5,})$/);
+      if (m) { name = m[1]; phone = m[2]; }
+    }
+    name = name.trim().slice(0, 24);
+    if (!name) continue;
+    rows.push({ name, phone: phone.replace(/\D/g, ''), msg: msg.trim().slice(0, 300) });
+  }
+  return rows.slice(0, 200);
+}
+function pvPerson() {                  // what the live preview shows
+  if (mode !== 'batch') return { to: toEl.value, msg: msgEl.value };
+  const r = parseList(listEl.value)[0];
+  return { to: r ? r.name : '', msg: r && r.msg ? r.msg : msgEl.value };
+}
+function applyMode() {
+  const t = UI[lang], batch = mode === 'batch';
+  $('#toField').hidden = batch;
+  $('#listField').hidden = !batch;
+  document.querySelectorAll('#modeSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+  $('#msgLabel').textContent = batch ? t.msgLabelBatch : t.msgLabel;
+  $('#result').hidden = batch || !current;
+  $('#batch').hidden = !batch || !store.get('cards.batch', null);
+  updateMakeLabel();
+}
+function updateMakeLabel() {
+  const t = UI[lang], n = parseList(listEl.value).length;
+  $('#make').textContent = mode === 'batch' ? t.makeBatch(n) : t.make;
+  $('#listCount').textContent = t.listCount(n);
+}
+document.querySelectorAll('#modeSeg button').forEach(b => b.addEventListener('click', () => {
+  mode = b.dataset.mode; store.set('cards.mode', mode); applyMode(); refreshPreview();
+}));
+listEl.addEventListener('input', () => { store.set('cards.list', listEl.value); updateMakeLabel(); });
+
+function makeBatch() {
+  const rows = parseList(listEl.value);
+  if (!rows.length) { toast(UI[lang].batchEmpty); listEl.focus(); return; }
+  const old = store.get('cards.batch', null);
+  const sentBefore = new Set(old && old.items ? old.items.filter(i => i.sent).map(i => i.url) : []);
+  const items = rows.map(r => {
+    const u = new URL(`./${theme}/`, location.href);
+    u.search = cardParams({ to: r.name, msg: r.msg || msgEl.value }).toString();
+    const url = u.toString();
+    return { to: r.name, phone: r.phone, custom: !!r.msg, url, sent: sentBefore.has(url) };
+  });
+  store.set('cards.batch', { theme, lang, items, at: Date.now() });
+  renderBatch();
+  $('#batch').hidden = false;
+  $('#batch').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+const batchText = (b, i) => UI[b.lang].shareText(THEMES[b.theme], i.to, i.url);
+function setSent(idx, v) {
+  const b = store.get('cards.batch', null);
+  if (!b || !b.items[idx]) return;
+  b.items[idx].sent = v; store.set('cards.batch', b); renderBatch();
+}
+function renderBatch() {
+  const b = store.get('cards.batch', null), ul = $('#batchList');
+  ul.textContent = '';
+  if (!b || !b.items || !THEMES[b.theme]) return;
+  const t = UI[lang];
+  $('#batchTitle').textContent = t.batchTitle(THEMES[b.theme], b.items.length, b.items.filter(i => i.sent).length);
+  b.items.forEach((item, idx) => {
+    const li = document.createElement('li');
+    li.classList.toggle('is-done', !!item.sent);
+    const mark = document.createElement('button');
+    mark.type = 'button'; mark.className = 'done-btn'; mark.title = t.markSent; mark.setAttribute('aria-label', t.markSent);
+    mark.setAttribute('aria-pressed', String(!!item.sent)); mark.textContent = item.sent ? '✓' : '';
+    mark.addEventListener('click', () => setSent(idx, !item.sent));
+    const who = document.createElement('span'); who.className = 'who';
+    who.textContent = item.to || t.anyone;
+    const tag = document.createElement('small');
+    tag.textContent = [item.phone ? '+' + item.phone : t.noPhone, item.custom ? t.customTag : ''].filter(Boolean).join(' · ');
+    who.appendChild(tag);
+    const open = document.createElement('a'); open.className = 'btn'; open.href = item.url; open.target = '_blank'; open.rel = 'noopener'; open.textContent = '👀';
+    const cp = document.createElement('button'); cp.type = 'button'; cp.className = 'btn'; cp.textContent = '🔗';
+    cp.addEventListener('click', () => copy(item.url));
+    const wa = document.createElement('a'); wa.className = 'btn wa'; wa.target = '_blank'; wa.rel = 'noopener'; wa.textContent = '💬';
+    wa.href = `https://wa.me/${item.phone || ''}?text=` + encodeURIComponent(batchText(b, item));
+    wa.addEventListener('click', () => setTimeout(() => setSent(idx, true), 300));
+    li.append(mark, who, open, cp, wa);
+    ul.appendChild(li);
+  });
+}
+$('#batchClear').addEventListener('click', () => { store.set('cards.batch', null); renderBatch(); $('#batch').hidden = true; });
+$('#copyAll').addEventListener('click', async () => {
+  const b = store.get('cards.batch', null);
+  if (!b) return;
+  const text = b.items.map(i => `【${i.to}】\n${batchText(b, i)}`).join('\n\n');
+  try { await navigator.clipboard.writeText(text); toast(UI[lang].allCopied); } catch { copy(text); }
+});
+$('#csv').addEventListener('click', () => {
+  const b = store.get('cards.batch', null);
+  if (!b) return;
+  const cell = v => { let s = String(v); if (/^[=+\-@]/.test(s)) s = "'" + s; return '"' + s.replace(/"/g, '""') + '"'; };   // no spreadsheet formulas
+  const rows = [UI[lang].csvHead, ...b.items.map(i => [i.to, i.phone ? '+' + i.phone : '', i.url, batchText(b, i)])];
+  const csv = '\ufeff' + rows.map(r => r.map(cell).join(',')).join('\r\n');   // BOM so Excel reads Chinese
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = `${b.theme}-cards.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
 
 apply();
 count();

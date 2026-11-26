@@ -236,6 +236,7 @@ main#stage > section{grid-area:1/1}
 }
 .pill:hover{background:rgba(var(--accent-rgb),.12);border-color:rgba(var(--accent-rgb),.6)}
 .pill:disabled{opacity:.5;cursor:wait}
+@media (max-width:420px){.actions{gap:8px}.pill{font-size:.84rem;padding:.6em .85em}}
 
 /* ---------- floating UI ---------- */
 .sound{

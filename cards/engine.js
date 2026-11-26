@@ -54,7 +54,7 @@ const UI = {
     docTitle: to => to ? `${pick(TH.greet)}, ${to}` : `${pick(TH.greet)} ✦`,
     aria: to => `Open the ${pick(TH.occasion)} for ${to || 'you'}`,
     tip: touch => touch ? 'Tap or swipe for stardust' : 'Click or move the mouse for stardust',
-    replay: '↺ One more time', save: '⤓ Save image', saving: 'Drawing…',
+    replay: '↺ Relive the moment', save: '⤓ Save image', saving: 'Drawing…',
     saveHint: touch => touch ? 'Press and hold the image to save it' : 'Your card as an image',
     download: '⤓ Download', share: '↗ Share', close: '✕ Close',
     mute: 'Mute music', play: 'Play music',
